@@ -1,0 +1,27 @@
+{
+  "name": "ilmai-board-scraper",
+  "version": "1.0.0",
+  "description": "Automated scraper for BSEK & BIEK board news -> Firebase Firestore",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "scrape:once": "tsx src/index.ts --once"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^12.3.0",
+    "node-cron": "^3.0.3",
+    "puppeteer": "^25.3.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@types/node-cron": "^3.0.11",
+    "@types/puppeteer": "^5.4.7"
+  }
+}

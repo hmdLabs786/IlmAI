@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "321340615024",
+    "project_id": "ilmai-34684",
+    "storage_bucket": "ilmai-34684.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:321340615024:android:1fdc826ca13d3f940947b5",
+        "android_client_info": {
+          "package_name": "com.habban.ilmai.ilmai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnY0fIhv2qruoFarUxlRjs5L7FUwoAkPM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
