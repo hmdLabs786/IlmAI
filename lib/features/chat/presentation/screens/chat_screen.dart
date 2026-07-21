@@ -1283,33 +1283,26 @@ This is a demo response because the Gemini API key is not configured yet.
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // Send button (left)
+              // Image picker (left, solid blue)
               GestureDetector(
-                onTap: _isGenerating
-                    ? null
-                    : () => _sendMessage(authProvider),
+                onTap: _showImagePickerSheet,
                 child: Container(
                   width: 48,
                   height: 48,
                   margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _isGenerating
-                        ? AppColors.onSurfaceMutedOf(context)
-                            .withValues(alpha: 0.12)
-                        : AppColors.primary,
+                    color: AppColors.primary,
                     border: Border.all(
-                      color: _isGenerating
-                          ? Colors.transparent
-                          : AppColors.primary.withValues(alpha: 0.3),
+                      color: AppColors.primary.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Icon(
-                    _isGenerating
-                        ? Icons.hourglass_bottom_rounded
-                        : Icons.arrow_upward_rounded,
+                    _selectedImage != null
+                        ? Icons.image_rounded
+                        : Icons.add_photo_alternate_outlined,
+                    size: 22,
                     color: Colors.white,
-                    size: 24,
                   ),
                 ),
               ),
@@ -1347,32 +1340,33 @@ This is a demo response because the Gemini API key is not configured yet.
                   ),
                 ),
               ),
-              // Image picker (right)
+              // Send button (right)
               GestureDetector(
-                onTap: _showImagePickerSheet,
+                onTap: _isGenerating
+                    ? null
+                    : () => _sendMessage(authProvider),
                 child: Container(
                   width: 48,
                   height: 48,
                   margin: const EdgeInsets.only(left: 8),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _selectedImage != null
-                        ? AppColors.primary.withValues(alpha: 0.1)
-                        : fieldColor,
+                    color: _isGenerating
+                        ? AppColors.onSurfaceMutedOf(context)
+                            .withValues(alpha: 0.12)
+                        : AppColors.primary,
                     border: Border.all(
-                      color: _selectedImage != null
-                          ? AppColors.primary
-                          : borderColor.withValues(alpha: 0.4),
+                      color: _isGenerating
+                          ? Colors.transparent
+                          : AppColors.primary.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Icon(
-                    _selectedImage != null
-                        ? Icons.image_rounded
-                        : Icons.add_photo_alternate_outlined,
-                    size: 22,
-                    color: _selectedImage != null
-                        ? AppColors.primary
-                        : AppColors.primary.withValues(alpha: 0.7),
+                    _isGenerating
+                        ? Icons.hourglass_bottom_rounded
+                        : Icons.arrow_upward_rounded,
+                    color: Colors.white,
+                    size: 24,
                   ),
                 ),
               ),
