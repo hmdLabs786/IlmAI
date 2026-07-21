@@ -28,6 +28,7 @@ class _ChatScreenState extends State<ChatScreen>
   final ScrollController _scrollController = ScrollController();
   final ChatFirestoreService _chatService = ChatFirestoreService();
   final ImagePicker _imagePicker = ImagePicker();
+  final FocusNode _inputFocus = FocusNode();
 
   StreamSubscription<List<ChatMessageModel>>? _messagesSubscription;
   String? _currentChatId;
@@ -38,6 +39,7 @@ class _ChatScreenState extends State<ChatScreen>
 
   late AnimationController _sidebarCtrl;
   late Animation<Offset> _sidebarSlide;
+  late Animation<double> _backdropFade;
   bool _sidebarOpen = false;
 
   static const String _envApiKey =
@@ -56,7 +58,7 @@ class _ChatScreenState extends State<ChatScreen>
     super.initState();
     _sidebarCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 320),
+      duration: const Duration(milliseconds: 350),
     );
     _sidebarSlide = Tween<Offset>(
       begin: const Offset(-1, 0),
@@ -65,6 +67,10 @@ class _ChatScreenState extends State<ChatScreen>
       parent: _sidebarCtrl,
       curve: Curves.easeOutCubic,
     ));
+    _backdropFade = CurvedAnimation(
+      parent: _sidebarCtrl,
+      curve: Curves.easeIn,
+    );
   }
 
   @override
@@ -73,6 +79,7 @@ class _ChatScreenState extends State<ChatScreen>
     _messageController.dispose();
     _scrollController.dispose();
     _sidebarCtrl.dispose();
+    _inputFocus.dispose();
     super.dispose();
   }
 
@@ -86,6 +93,7 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   void _closeSidebar() {
+    if (_sidebarCtrl.isAnimating) return;
     if (_sidebarOpen) {
       _sidebarCtrl.reverse();
       setState(() => _sidebarOpen = false);
@@ -219,6 +227,7 @@ $userText
       );
       if (image != null && mounted) {
         setState(() => _selectedImage = File(image.path));
+        _inputFocus.unfocus();
       }
     } catch (e) {
       if (mounted) {
@@ -396,22 +405,35 @@ This is a demo response because the Gemini API key is not configured yet.
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              _pickerOption(Icons.camera_alt_rounded, 'Camera', () {
-                Navigator.pop(ctx);
-                _pickImage(ImageSource.camera);
-              }),
-              _pickerOption(Icons.photo_library_rounded, 'Gallery', () {
-                Navigator.pop(ctx);
-                _pickImage(ImageSource.gallery);
-              }),
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.borderOf(context),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _pickerOption(Icons.camera_alt_rounded, 'Camera', () {
+                    Navigator.pop(ctx);
+                    _pickImage(ImageSource.camera);
+                  }),
+                  _pickerOption(Icons.photo_library_rounded, 'Gallery', () {
+                    Navigator.pop(ctx);
+                    _pickImage(ImageSource.gallery);
+                  }),
+                ],
+              ),
             ],
           ),
         ),
@@ -426,19 +448,27 @@ This is a demo response because the Gemini API key is not configured yet.
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.12),
+                  AppColors.primary.withValues(alpha: 0.04),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: AppColors.primary, size: 32),
+            child: Icon(icon, color: AppColors.primary, size: 30),
           ),
-          const SizedBox(height: 8),
-          Text(
-            label,
+          const SizedBox(height: 10),
+          Text(label,
             style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppColors.onSurfaceOf(context)),
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: AppColors.onSurfaceOf(context),
+            ),
           ),
         ],
       ),
@@ -447,11 +477,11 @@ This is a demo response because the Gemini API key is not configured yet.
 
   String _formatDate(DateTime dateTime) {
     final local = dateTime.toLocal();
-    final hour24 = local.hour;
-    final hour = hour24 % 12 == 0 ? 12 : hour24 % 12;
-    final minute = local.minute.toString().padLeft(2, '0');
-    final period = hour24 >= 12 ? 'PM' : 'AM';
-    return '${local.month}/${local.day}/${local.year}  $hour:$minute $period';
+    final now = DateTime.now();
+    final diff = now.difference(local).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+    return '${local.month}/${local.day}/${local.year}';
   }
 
   Widget _buildShimmerLoading() {
@@ -460,47 +490,38 @@ This is a demo response because the Gemini API key is not configured yet.
       child: Align(
         alignment: Alignment.centerLeft,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(
             color: AppColors.surfaceOf(context),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(18),
-              topRight: Radius.circular(18),
-              bottomLeft: Radius.circular(4),
-              bottomRight: Radius.circular(18),
-            ),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.borderOf(context)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                  width: 40,
-                  height: 10,
-                  decoration: BoxDecoration(
-                      color: AppColors.shimmerBase,
-                      borderRadius: BorderRadius.circular(4))),
-              const SizedBox(height: 10),
+                width: 40, height: 10,
+                decoration: BoxDecoration(
+                  color: AppColors.shimmerBase,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 12),
               Container(
-                  width: 220,
-                  height: 10,
-                  decoration: BoxDecoration(
-                      color: AppColors.shimmerBase,
-                      borderRadius: BorderRadius.circular(4))),
-              const SizedBox(height: 6),
+                width: 220, height: 10,
+                decoration: BoxDecoration(
+                  color: AppColors.shimmerBase,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 8),
               Container(
-                  width: 180,
-                  height: 10,
-                  decoration: BoxDecoration(
-                      color: AppColors.shimmerBase,
-                      borderRadius: BorderRadius.circular(4))),
-              const SizedBox(height: 6),
-              Container(
-                  width: 100,
-                  height: 10,
-                  decoration: BoxDecoration(
-                      color: AppColors.shimmerBase,
-                      borderRadius: BorderRadius.circular(4))),
+                width: 160, height: 10,
+                decoration: BoxDecoration(
+                  color: AppColors.shimmerBase,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
             ],
           ),
         ),
@@ -513,7 +534,7 @@ This is a demo response because the Gemini API key is not configured yet.
         text.split('\n\n').where((b) => b.trim().isNotEmpty).toList();
     final children = <Widget>[];
     final baseStyle = TextStyle(
-        fontSize: 15, height: 1.5, color: AppColors.onSurfaceOf(context));
+        fontSize: 15, height: 1.6, color: AppColors.onSurfaceOf(context));
 
     for (final block in blocks) {
       final trimmed = block.trim();
@@ -582,323 +603,488 @@ This is a demo response because the Gemini API key is not configured yet.
     );
   }
 
-  // ─── SIDEBAR ─────────────────────────────────────────────────────────
+  // ─── NEW SIDEBAR (premium design) ─────────────────────────────────────
 
   Widget _buildSidebar(String userId) {
     return Material(
       elevation: 0,
       color: Colors.transparent,
-      child: Row(
-        children: [
-          SizedBox(
-            width: 290,
-            child: Container(
-              height: double.infinity,
+      child: SizedBox(
+        width: 300,
+        child: Container(
+          height: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceOf(context),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 50,
+                offset: const Offset(8, 0),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // ─── Header ─────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primary.withValues(alpha: 0.88),
+                      Color(0xFF0F2460),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(28),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 36, height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.auto_stories_rounded,
+                            color: Colors.white, size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('IlmAI',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text('Chat History',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.65),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: _closeSidebar,
+                          child: Container(
+                            width: 30, height: 30,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.close_rounded,
+                              color: Colors.white, size: 18,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton.icon(
+                        onPressed: () => _startNewChat(userId),
+                        style: TextButton.styleFrom(
+                          backgroundColor:
+                              Colors.white.withValues(alpha: 0.14),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 10),
+                        ),
+                        icon: const Icon(
+                          Icons.add_rounded, size: 20,
+                        ),
+                        label: const Text(
+                          'New Chat',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // ─── Chat List ──────────────────────────────────────
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceOf(context),
+                  ),
+                  child: StreamBuilder<List<ChatSessionModel>>(
+                    stream: _chatService.getChatsStream(userId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(
+                          child: SizedBox(
+                            width: 24, height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        );
+                      }
+                      final chats = snapshot.data ?? const [];
+                      if (chats.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.chat_bubble_outline_rounded,
+                                  size: 40,
+                                  color:
+                                      AppColors.onSurfaceMutedOf(context)
+                                          .withValues(alpha: 0.3),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'No conversations yet',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors
+                                        .onSurfaceMutedOf(context),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Tap "New Chat" to start learning',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors
+                                        .onSurfaceMutedOf(context)
+                                        .withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                      return ListView.separated(
+                        padding: const EdgeInsets.only(
+                            top: 8, bottom: 8),
+                        itemCount: chats.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: 2),
+                        itemBuilder: (context, index) {
+                          final chat = chats[index];
+                          final selected =
+                              chat.id == _currentChatId;
+                          return _buildChatItem(chat, selected);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatItem(ChatSessionModel chat, bool selected) {
+    return GestureDetector(
+      onTap: () {
+        _closeSidebar();
+        _selectChat(chat.id);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: selected
+              ? Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.2))
+              : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 34, height: 34,
               decoration: BoxDecoration(
-                color: AppColors.surfaceOf(context),
-                borderRadius:
-                    const BorderRadius.horizontal(right: Radius.circular(28)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 40,
-                    offset: const Offset(4, 0),
+                color: selected
+                    ? AppColors.primary
+                    : AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.menu_book_rounded,
+                size: 17,
+                color: selected
+                    ? Colors.white
+                    : AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    chat.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight:
+                          selected ? FontWeight.w700 : FontWeight.w500,
+                      color: AppColors.onSurfaceOf(context),
+                    ),
+                  ),
+                  Text(
+                    _formatDate(chat.createdAt),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.onSurfaceMutedOf(context),
+                    ),
                   ),
                 ],
               ),
-              child: Column(
+            ),
+            GestureDetector(
+              onTap: () => _confirmDeleteChat(chat.id),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 16,
+                  color: Colors.red.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteChat(String chatId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.delete_outline_rounded,
+                color: Colors.red.shade400, size: 24),
+            const SizedBox(width: 10),
+            const Text('Delete Chat?',
+              style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'This will permanently delete this conversation and all its messages. This action cannot be undone.',
+          style: TextStyle(fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.onSurfaceMutedOf(context),
+            ),
+            child: const Text('Cancel',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await _chatService.deleteChat(chatId);
+      if (_currentChatId == chatId && mounted) {
+        setState(() {
+          _currentChatId = null;
+          _messages = [];
+        });
+      }
+    }
+  }
+
+  // ─── GREETING (animated & unique) ────────────────────────────────────
+
+  Widget _buildGreetingState(StudentProfile profile, String userId) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 24),
+            // Animated icon stack
+            SizedBox(
+              width: 120, height: 120,
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: FilledButton.icon(
-                        onPressed: () => _startNewChat(userId),
-                        style: FilledButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        icon: const Icon(Icons.add_rounded, size: 20),
-                        label: const Text('New Chat'),
+                  Container(
+                    width: 120, height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.primary.withValues(alpha: 0.15),
+                          AppColors.primary.withValues(alpha: 0.02),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
+                  Container(
+                    width: 88, height: 88,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.10),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.auto_stories_rounded,
+                      size: 44,
+                      color: AppColors.primary.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+            // Headline
+            Text(
+              'Master Your Board\nExams with IlmAI',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.w900,
+                color: AppColors.onSurfaceOf(context),
+                height: 1.15,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 14),
+            // Subtitle
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                ),
+              ),
+              child: Text(
+                '${profile.boardName}  |  Class ${profile.studentClass}  |  ${profile.levelName}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+            // Subject bubbles
+            _buildSubjectGrid(),
+            const SizedBox(height: 28),
+            // Start button
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, Color(0xFF0F2460)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _startNewChat(userId),
+                    borderRadius: BorderRadius.circular(16),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Icon(Icons.chat_bubble_outline_rounded,
+                            color: Colors.white, size: 20),
+                        SizedBox(width: 10),
                         Text(
-                          'Chat History',
+                          'Start Learning',
                           style: TextStyle(
-                            fontSize: 13,
+                            color: Colors.white,
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.onSurfaceMutedOf(context),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: StreamBuilder<List<ChatSessionModel>>(
-                      stream: _chatService.getChatsStream(userId),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2));
-                        }
-                        final chats = snapshot.data ?? const [];
-                        if (chats.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'No chats yet.\nStart a new conversation!',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.onSurfaceMutedOf(context),
-                                height: 1.5,
-                              ),
-                            ),
-                          );
-                        }
-                        return ListView.separated(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 12),
-                          itemCount: chats.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 4),
-                          itemBuilder: (context, index) {
-                            final chat = chats[index];
-                            final selected = chat.id == _currentChatId;
-                            return InkWell(
-                              onTap: () {
-                                _closeSidebar();
-                                _selectChat(chat.id);
-                              },
-                              borderRadius:
-                                  BorderRadius.circular(14),
-                              child: AnimatedContainer(
-                                duration:
-                                    const Duration(milliseconds: 200),
-                                padding:
-                                    const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: selected
-                                      ? AppColors.primary
-                                          .withValues(alpha: 0.08)
-                                      : Colors.transparent,
-                                  borderRadius:
-                                      BorderRadius.circular(14),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.chat_bubble_outline_rounded,
-                                      size: 18,
-                                      color: selected
-                                          ? AppColors.primary
-                                          : AppColors
-                                              .onSurfaceMutedOf(context),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            chat.title,
-                                            maxLines: 1,
-                                            overflow:
-                                                TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: selected
-                                                  ? FontWeight.w700
-                                                  : FontWeight.w500,
-                                              color: AppColors
-                                                  .onSurfaceOf(context),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            _formatDate(chat.createdAt),
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: AppColors
-                                                  .onSurfaceMutedOf(
-                                                      context),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (selected)
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                    const SizedBox(width: 4),
-                                    GestureDetector(
-                                      onTap: () async {
-                                        final confirm =
-                                            await showDialog<bool>(
-                                          context: context,
-                                          builder: (ctx) =>
-                                              AlertDialog(
-                                            title: const Text(
-                                                'Delete Chat?'),
-                                            content: const Text(
-                                                'This will permanently delete the chat and its messages.'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.pop(
-                                                        ctx, false),
-                                                child:
-                                                    const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.pop(
-                                                        ctx, true),
-                                                style: TextButton
-                                                    .styleFrom(
-                                                  foregroundColor:
-                                                      Colors.red,
-                                                ),
-                                                child:
-                                                    const Text('Delete'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                        if (confirm == true) {
-                                          await _chatService
-                                              .deleteChat(chat.id);
-                                          if (_currentChatId ==
-                                                  chat.id &&
-                                              mounted) {
-                                            setState(() {
-                                              _currentChatId = null;
-                                              _messages = [];
-                                            });
-                                          }
-                                        }
-                                      },
-                                      child: Icon(
-                                        Icons
-                                            .delete_outline_rounded,
-                                        size: 18,
-                                        color: Colors.red
-                                            .withValues(alpha: 0.5),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Spacer(),
-        ],
-      ),
-    );
-  }
-
-  // ─── GREETING STATE ───────────────────────────────────────────────────
-
-  Widget _buildGreetingState(
-      StudentProfile profile, String userId) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 20),
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.20),
-                    AppColors.primary.withValues(alpha: 0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
                 ),
-              ),
-              child: const Icon(
-                Icons.auto_stories_rounded,
-                size: 48,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 28),
-            Text(
-              'Unlock Your\nAcademic Potential',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                color: AppColors.onSurfaceOf(context),
-                height: 1.15,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Master your ${profile.boardName} syllabus with AI-powered tutoring tailored to your pace.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                height: 1.5,
-                color: AppColors.onSurfaceMutedOf(context),
               ),
             ),
             const SizedBox(height: 32),
-            _buildSubjectGrid(),
-            const SizedBox(height: 28),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: FilledButton.icon(
-                onPressed: () => _startNewChat(userId),
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                icon: const Icon(Icons.chat_bubble_outline_rounded,
-                    size: 20),
-                label: const Text(
-                  'Start Learning',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -926,13 +1112,20 @@ This is a demo response because the Gemini API key is not configured yet.
           },
           child: Container(
             padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.06),
+              color: AppColors.surfaceOf(context),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.10),
+                color: AppColors.borderOf(context),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -944,7 +1137,7 @@ This is a demo response because the Gemini API key is not configured yet.
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                    color: AppColors.onSurface,
                   ),
                 ),
               ],
@@ -959,7 +1152,7 @@ This is a demo response because the Gemini API key is not configured yet.
 
   Widget _buildTopBar(StudentProfile profile) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 12, 12, 8),
+      padding: const EdgeInsets.fromLTRB(8, 14, 12, 10),
       decoration: BoxDecoration(
         color: AppColors.surfaceOf(context),
         border: Border(
@@ -970,25 +1163,35 @@ This is a demo response because the Gemini API key is not configured yet.
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: _toggleSidebar,
-            icon: Icon(
-              Icons.menu_rounded,
-              color: AppColors.onSurfaceOf(context),
+          GestureDetector(
+            onTap: _toggleSidebar,
+            child: Container(
+              width: 38, height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceAltOf(context),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.menu_rounded,
+                color: AppColors.onSurfaceOf(context),
+                size: 22,
+              ),
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 10),
           Container(
-            width: 32,
-            height: 32,
+            width: 34, height: 34,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, Color(0xFF0F2460)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.auto_awesome_rounded,
-              color: Colors.white,
-              size: 18,
+              color: Colors.white, size: 18,
             ),
           ),
           const SizedBox(width: 10),
@@ -1005,7 +1208,7 @@ This is a demo response because the Gemini API key is not configured yet.
                   ),
                 ),
                 Text(
-                  '${profile.boardName}  Class ${profile.studentClass}',
+                  '${profile.boardName}  .  Class ${profile.studentClass}',
                   style: TextStyle(
                     fontSize: 11,
                     color: AppColors.onSurfaceMutedOf(context),
@@ -1014,11 +1217,180 @@ This is a demo response because the Gemini API key is not configured yet.
               ],
             ),
           ),
-          IconButton(
-            onPressed: () => context.push('/menu'),
-            icon: Icon(
-              Icons.more_horiz_rounded,
-              color: AppColors.onSurfaceOf(context),
+        ],
+      ),
+    );
+  }
+
+  // ─── INPUT BAR (redesigned) ─────────────────────────────────────────
+
+  Widget _buildInputBar(AuthProvider authProvider) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceOf(context),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.borderOf(context).withValues(alpha: 0.3),
+          ),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_selectedImage != null)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                ),
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      _selectedImage!,
+                      width: 36, height: 36,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _selectedImage!.path.split('/').last,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.onSurfaceOf(context),
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => setState(() => _selectedImage = null),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 16,
+                        color: Colors.red.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAltOf(context),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: AppColors.borderOf(context),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 4),
+                  child: GestureDetector(
+                    onTap: _showImagePickerSheet,
+                    child: Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: _selectedImage != null
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        _selectedImage != null
+                            ? Icons.image_rounded
+                            : Icons.add_photo_alternate_outlined,
+                        size: 20,
+                        color: _selectedImage != null
+                            ? AppColors.primary
+                            : AppColors.onSurfaceMutedOf(context),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    focusNode: _inputFocus,
+                    minLines: 1,
+                    maxLines: 4,
+                    textInputAction: TextInputAction.send,
+                    style: TextStyle(
+                      color: AppColors.onSurfaceOf(context),
+                      fontSize: 15,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Ask a question or paste a topic...',
+                      hintStyle: TextStyle(
+                        color: AppColors.onSurfaceMutedOf(context)
+                            .withValues(alpha: 0.7),
+                        fontSize: 15,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14),
+                      isDense: true,
+                    ),
+                    onSubmitted: (_) => _sendMessage(authProvider),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 4, bottom: 4),
+                  child: GestureDetector(
+                    onTap: _isGenerating
+                        ? null
+                        : () => _sendMessage(authProvider),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: _isGenerating
+                            ? null
+                            : const LinearGradient(
+                                colors: [
+                                  AppColors.primary,
+                                  Color(0xFF0F2D6B),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                        color: _isGenerating
+                            ? AppColors.onSurfaceMutedOf(context)
+                                .withValues(alpha: 0.15)
+                            : null,
+                      ),
+                      child: Icon(
+                        _isGenerating
+                            ? Icons.hourglass_bottom_rounded
+                            : Icons.arrow_upward_rounded,
+                        color: _isGenerating
+                            ? AppColors.onSurfaceMutedOf(context)
+                            : Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1026,35 +1398,52 @@ This is a demo response because the Gemini API key is not configured yet.
     );
   }
 
-  // ─── MESSAGES ───────────────────────────────────────────────────────
+  // ─── MESSAGES (with entrance animation) ──────────────────────────────
 
   Widget _buildMessageBubble(ChatMessageModel message, {int index = -1}) {
     final isUser = message.sender == 'user';
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Align(
         alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
         child: ConstrainedBox(
-          constraints:
-              BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.82,
+          ),
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: isUser
                   ? AppColors.primary
                   : AppColors.surfaceOf(context),
               borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(20),
-                topRight: const Radius.circular(20),
-                bottomLeft:
-                    Radius.circular(isUser ? 20 : 4),
-                bottomRight:
-                    Radius.circular(isUser ? 4 : 20),
+                topLeft: const Radius.circular(22),
+                topRight: const Radius.circular(22),
+                bottomLeft: Radius.circular(isUser ? 22 : 6),
+                bottomRight: Radius.circular(isUser ? 6 : 22),
               ),
               border: isUser
                   ? null
-                  : Border.all(color: AppColors.borderOf(context)),
+                  : Border.all(
+                      color: AppColors.borderOf(context)),
+              boxShadow: isUser
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primary
+                            .withValues(alpha: 0.2),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black
+                            .withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1067,12 +1456,12 @@ This is a demo response because the Gemini API key is not configured yet.
                       borderRadius: BorderRadius.circular(12),
                       child: Image.file(
                         File(message.imageUrl!),
-                        height: 180,
+                        height: 160,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
-                          height: 120,
-                          color: Colors.grey.withValues(alpha: 0.2),
+                          height: 100,
+                          color: Colors.grey.withValues(alpha: 0.15),
                           child: const Center(
                             child: Icon(Icons.broken_image,
                                 color: Colors.grey),
@@ -1097,25 +1486,47 @@ This is a demo response because the Gemini API key is not configured yet.
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(
-                          width: 28,
-                          height: 28,
-                          child: IconButton(
-                            onPressed: () {
-                              Clipboard.setData(
-                                  ClipboardData(text: message.text));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Response copied'),
-                                  duration: Duration(seconds: 2),
+                        GestureDetector(
+                          onTap: () {
+                            Clipboard.setData(
+                                ClipboardData(text: message.text));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Copied to clipboard'),
+                                duration: Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.onSurfaceOf(context)
+                                  .withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.copy_rounded,
+                                  size: 13,
+                                  color: AppColors
+                                      .onSurfaceMutedOf(context),
                                 ),
-                              );
-                            },
-                            icon: const Icon(Icons.copy_rounded,
-                                size: 15),
-                            padding: EdgeInsets.zero,
-                            color: AppColors.onSurfaceMutedOf(context),
-                            tooltip: 'Copy response',
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Copy',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors
+                                        .onSurfaceMutedOf(context),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -1125,90 +1536,6 @@ This is a demo response because the Gemini API key is not configured yet.
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  // ─── INPUT BAR ─────────────────────────────────────────────────────
-
-  Widget _buildInputBar(AuthProvider authProvider) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceOf(context),
-        border: Border(
-          top: BorderSide(
-              color: AppColors.borderOf(context).withValues(alpha: 0.4)),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.surfaceAltOf(context),
-              borderRadius: BorderRadius.circular(24),
-              border:
-                  Border.all(color: AppColors.borderOf(context)),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: _showImagePickerSheet,
-                  icon: Icon(
-                    _selectedImage != null
-                        ? Icons.image_rounded
-                        : Icons.add_photo_alternate_outlined,
-                    color: _selectedImage != null
-                        ? AppColors.primary
-                        : AppColors.onSurfaceMutedOf(context),
-                  ),
-                ),
-                Container(
-                  width: 220,
-                  constraints: const BoxConstraints(maxHeight: 120),
-                  child: TextField(
-                    controller: _messageController,
-                    minLines: 1,
-                    maxLines: 4,
-                    textInputAction: TextInputAction.send,
-                    style: TextStyle(
-                        color: AppColors.onSurfaceOf(context)),
-                    decoration: InputDecoration(
-                      hintText: 'Ask anything...',
-                      hintStyle: TextStyle(
-                        color: AppColors.onSurfaceMutedOf(context),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 14),
-                      isDense: true,
-                    ),
-                    onSubmitted:
-                        (_) => _sendMessage(authProvider),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, Color(0xFF0F2D6B)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: IconButton(
-              onPressed:
-                  _isGenerating ? null : () => _sendMessage(authProvider),
-              icon: const Icon(Icons.arrow_upward_rounded,
-                  color: Colors.white),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1232,16 +1559,18 @@ This is a demo response because the Gemini API key is not configured yet.
             _buildTopBar(profile),
             Expanded(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 280),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeIn,
                 child: _currentChatId == null
                     ? _buildGreetingState(profile, user.uid)
                     : ListView.builder(
                         key: const ValueKey('chat_list'),
                         controller: _scrollController,
                         padding: const EdgeInsets.fromLTRB(
-                            16, 16, 16, 12),
-                        itemCount:
-                            _messages.length + (_isGenerating ? 1 : 0),
+                            16, 20, 16, 12),
+                        itemCount: _messages.length +
+                            (_isGenerating ? 1 : 0),
                         itemBuilder: (context, index) {
                           if (_isGenerating &&
                               index == _messages.length) {
@@ -1259,8 +1588,7 @@ This is a demo response because the Gemini API key is not configured yet.
                             );
                           }
                           return _buildMessageBubble(
-                              _messages[index],
-                              index: index);
+                              _messages[index], index: index);
                         },
                       ),
               ),
@@ -1268,17 +1596,20 @@ This is a demo response because the Gemini API key is not configured yet.
             _buildInputBar(authProvider),
           ],
         ),
+        // Backdrop (FIXED: fills the entire Stack)
         if (_sidebarOpen)
-          GestureDetector(
-            onTap: _closeSidebar,
-            child: AnimatedOpacity(
-              opacity: _sidebarOpen ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 300),
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.35),
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _closeSidebar,
+              child: FadeTransition(
+                opacity: _backdropFade,
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.35),
+                ),
               ),
             ),
           ),
+        // Sidebar
         SlideTransition(
           position: _sidebarSlide,
           child: _buildSidebar(user.uid),
