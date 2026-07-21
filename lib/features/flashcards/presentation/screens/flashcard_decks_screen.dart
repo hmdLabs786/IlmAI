@@ -67,18 +67,40 @@ class _FlashcardDecksScreenState extends State<FlashcardDecksScreen> {
           children: [
             TextField(
               controller: titleC,
-              decoration: const InputDecoration(labelText: 'Deck title', hintText: 'e.g. Physics Ch 5'),
+              decoration: InputDecoration(
+                labelText: 'Deck title',
+                hintText: 'e.g. Physics Ch 5',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: subjectC,
-              decoration: const InputDecoration(labelText: 'Subject', hintText: 'e.g. Physics'),
+              decoration: InputDecoration(
+                labelText: 'Subject',
+                hintText: 'e.g. Physics',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+                ),
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Create')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+            child: const Text('Create'),
+          ),
         ],
       ),
     );
@@ -124,6 +146,7 @@ class _FlashcardDecksScreenState extends State<FlashcardDecksScreen> {
                     onPressed: _createNewDeck,
                     icon: const Icon(Icons.add),
                     label: const Text('Create Deck'),
+                    style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                   ),
                 ],
               ),
@@ -165,11 +188,11 @@ class _FlashcardDecksScreenState extends State<FlashcardDecksScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: isDue ? AppColors.primary : AppColors.border),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDue ? AppColors.primary : AppColors.primary.withValues(alpha: 0.4)),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: () {
           if (deck.cardCount == 0) {
             context.go('/flashcards/generate/${deck.id}');
@@ -208,7 +231,7 @@ class _FlashcardDecksScreenState extends State<FlashcardDecksScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                   child: Text('$due due', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
                 ),

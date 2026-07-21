@@ -282,7 +282,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         _selectedBoard == 'BSEK' ? ['9', '10'] : ['11', '12'];
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.surfaceOf(context),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,8 +310,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(16)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.4))),
               child: Row(
                 children: boards.map((b) {
                   final sel = _selectedBoard == b;
@@ -327,16 +329,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             color: sel
                                 ? Colors.white
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: sel
-                                ? [
-                                    BoxShadow(
-                                        color: Colors.black
-                                            .withValues(alpha: 0.05),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2))
-                                  ]
-                                : null),
+                            borderRadius: BorderRadius.circular(12)),
                         alignment: Alignment.center,
                         child: Text(b,
                             style: TextStyle(
@@ -366,7 +359,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           style: TextStyle(
                               color: sel
                                   ? Colors.white
-                                  : AppColors.onSurface,
+                                  : AppColors.primary,
                               fontWeight: sel
                                   ? FontWeight.bold
                                   : FontWeight.normal,
@@ -377,9 +370,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       side: BorderSide(
                           color: sel
                               ? AppColors.primary
-                              : AppColors.border),
+                              : AppColors.primary
+                                  .withValues(alpha: 0.4)),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                          borderRadius: BorderRadius.circular(30)),
                       onSelected: (v) {
                         if (v) setState(() => _selectedClass = cl);
                       },
@@ -443,7 +437,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
-                                            BorderRadius.circular(12)),
+                                            BorderRadius.circular(14)),
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 24, vertical: 14)),
                               ),
@@ -475,9 +469,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                                color: AppColors.border)),
+                                color: AppColors.primary
+                                    .withValues(alpha: 0.4))),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Row(
@@ -489,9 +484,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                   color: AppColors.primary
                                       .withValues(alpha: 0.08),
                                   borderRadius:
-                                      BorderRadius.circular(10),
+                                      BorderRadius.circular(14),
                                   border: Border.all(
-                                      color: AppColors.border),
+                                      color: AppColors.primary
+                                          .withValues(alpha: 0.4)),
                                 ),
                                 child: Column(
                                   mainAxisAlignment:
@@ -642,14 +638,19 @@ class _ActionChip extends StatelessWidget {
     final c = color;
     return onTap != null
         ? Material(
-            color: c.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
             child: InkWell(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(14),
               onTap: onTap,
-              child: Padding(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                      color: c.withValues(alpha: 0.4)),
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 5),
+                    horizontal: 12, vertical: 6),
                 child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -666,10 +667,12 @@ class _ActionChip extends StatelessWidget {
           )
         : Container(
             padding: const EdgeInsets.symmetric(
-                horizontal: 10, vertical: 5),
+                horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-                color: c.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8)),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                    color: c.withValues(alpha: 0.4))),
             child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

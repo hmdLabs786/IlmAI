@@ -228,7 +228,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       padding: const EdgeInsets.only(bottom: 10, left: 2),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: muted),
+          Icon(icon, size: 14, color: AppColors.primary),
           const SizedBox(width: 6),
           Text(
             title.toUpperCase(),
@@ -245,26 +245,15 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Widget _settingsCard({required Widget child}) {
-    final bdr = AppColors.borderOf(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surfaceAltOf(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: bdr),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: child,
-      ),
+      child: child,
     );
   }
 
@@ -278,13 +267,12 @@ class _SettingsScreenState extends State<SettingsScreen>
   }) {
     final onSurf = AppColors.onSurfaceOf(context);
     final muted = AppColors.onSurfaceMutedOf(context);
-    final bdr = AppColors.borderOf(context);
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.10),
+            color: AppColors.primary.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: iconColor, size: 18),
@@ -319,7 +307,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           activeThumbColor: AppColors.primary,
           activeTrackColor: AppColors.primary.withValues(alpha: 0.35),
           inactiveThumbColor: AppColors.surfaceAltOf(context),
-          inactiveTrackColor: bdr,
+          inactiveTrackColor: AppColors.primary.withValues(alpha: 0.15),
         ),
       ],
     );
@@ -342,7 +330,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.10),
+              color: AppColors.primary.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: iconColor, size: 18),
@@ -383,9 +371,9 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   Widget _divider() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       child: Divider(
-        color: AppColors.borderOf(context).withValues(alpha: 0.7),
+        color: AppColors.primary.withValues(alpha: 0.10),
         height: 1,
       ),
     );

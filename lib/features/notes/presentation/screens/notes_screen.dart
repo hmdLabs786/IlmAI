@@ -206,13 +206,13 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.grey, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                   onPressed: () => setState(() => _generatedNoteText = ""),
                   icon: const Icon(Icons.arrow_back, color: Colors.white, size: 16),
                   label: const Text("Back", style: TextStyle(color: Colors.white)),
                 ),
                 ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                   onPressed: _downloadNoteAsPdf,
                   icon: const Icon(Icons.download, color: Colors.white, size: 16),
                   label: const Text("Export PDF", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -224,7 +224,7 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+              decoration: BoxDecoration(color: AppColors.surfaceOf(context), borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
               child: SingleChildScrollView(
                 child: SelectableText(_generatedNoteText, style: const TextStyle(fontSize: 14, height: 1.5, color: AppColors.onSurface)),
               ),
@@ -263,7 +263,7 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
             ),
             const SizedBox(height: 35),
             SizedBox(width: double.infinity, height: 52, child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
               onPressed: _selectedChapter == null ? null : () => _generateSyllabusNotes(profile),
               child: const Text("Generate Revision Notes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             )),
@@ -279,7 +279,7 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: Container(
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: AppColors.surfaceOf(context), borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
             child: TextField(
               controller: _searchController,
               style: const TextStyle(color: AppColors.onSurface),
@@ -327,7 +327,7 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(color: AppColors.surfaceOf(context), borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
         child: ListTile(
           title: Text(note['title'] ?? 'Revision Note', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.onSurface)),
           subtitle: Text(note['date'] != null ? DateFormat('MMM d, yyyy').format(DateTime.parse(note['date'])) : ''),
@@ -337,7 +337,7 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
               context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
               builder: (context) => Container(
                 height: MediaQuery.of(context).size.height * 0.8,
-                decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                decoration: BoxDecoration(color: AppColors.surfaceOf(context), borderRadius: const BorderRadius.vertical(top: Radius.circular(24))),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -367,9 +367,9 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
 
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
-      hintText: hint, filled: true, fillColor: AppColors.surface,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.border)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.border)),
+      hintText: hint, filled: true, fillColor: AppColors.surfaceOf(context),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.4))),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.4))),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );
   }

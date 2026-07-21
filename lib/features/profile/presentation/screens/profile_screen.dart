@@ -168,8 +168,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceAltOf(context), borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.borderOf(context)),
+        color: AppColors.surfaceAltOf(context),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
       ),
       child: Text(text, style: TextStyle(color: AppColors.onSurfaceOf(context), fontWeight: FontWeight.w700, fontSize: 12)),
     );
@@ -180,9 +181,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceAltOf(context), borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.borderOf(context)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, 10))],
+        color: AppColors.surfaceAltOf(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,9 +280,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: tierColor.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: tierColor.withValues(alpha: 0.2)),
+        color: AppColors.surfaceAltOf(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
@@ -316,8 +317,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceAltOf(context), borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.borderOf(context)),
+        color: AppColors.surfaceAltOf(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
       ),
       child: Column(
         children: [
@@ -347,10 +349,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return InputDecoration(
       hintText: hint,
       filled: true,
-      fillColor: AppColors.surfaceOf(context),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.borderOf(context))),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.borderOf(context))),
-      disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.borderOf(context))),
+      fillColor: AppColors.surfaceAltOf(context),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.4))),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.4))),
+      disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.4))),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }

@@ -139,16 +139,9 @@ class _HelpScreenState extends State<HelpScreen> {
           // ── Styled FAQ tiles ──
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              color: AppColors.surfaceAltOf(context),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
             ),
             clipBehavior: Clip.antiAlias,
             child: Column(
@@ -162,7 +155,7 @@ class _HelpScreenState extends State<HelpScreen> {
                         height: 1,
                         indent: 16,
                         endIndent: 16,
-                        color: AppColors.border.withValues(alpha: 0.6),
+                        color: AppColors.primary.withValues(alpha: 0.2),
                       ),
                     Theme(
                       data: Theme.of(context).copyWith(
@@ -204,7 +197,7 @@ class _HelpScreenState extends State<HelpScreen> {
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
+                              color: AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -235,16 +228,9 @@ class _HelpScreenState extends State<HelpScreen> {
           Container(
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              color: AppColors.surfaceAltOf(context),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
             ),
             child: Form(
               key: _formKey,
@@ -296,19 +282,19 @@ class _HelpScreenState extends State<HelpScreen> {
                       hintStyle:
                           const TextStyle(color: AppColors.onSurfaceMuted),
                       filled: true,
-                      fillColor: AppColors.surface,
+                      fillColor: Colors.white,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                         borderSide:
-                            BorderSide(color: AppColors.border),
+                            BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                         borderSide:
-                            BorderSide(color: AppColors.border),
+                            BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
                             color: AppColors.primary, width: 1.5),
                       ),
@@ -393,11 +379,11 @@ class _HelpScreenState extends State<HelpScreen> {
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.08)
+              ? Colors.white
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? AppColors.primary : Colors.transparent,
             width: isSelected ? 1.5 : 1,
           ),
         ),

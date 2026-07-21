@@ -149,7 +149,10 @@ class _FlashcardGenerateScreenState extends State<FlashcardGenerateScreen> {
                     decoration: InputDecoration(
                       hintText: 'Paste your study notes or chapter text here...',
                       filled: true, fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.border)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+                      ),
                       contentPadding: const EdgeInsets.all(16),
                     ),
                   ),
@@ -208,7 +211,10 @@ class _FlashcardGenerateScreenState extends State<FlashcardGenerateScreen> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint, filled: true, fillColor: Colors.white,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppColors.border)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }

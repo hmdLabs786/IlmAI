@@ -79,7 +79,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -115,10 +115,15 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
               onPressed: () => context.go('/flashcards/generate/${widget.deckId}'),
               icon: const Icon(Icons.auto_awesome, size: 18),
               label: const Text('Generate flashcards'),
+              style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
             ),
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
               child: const Text('Back to decks'),
             ),
           ],
@@ -140,10 +145,15 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
               onPressed: () => context.go('/flashcards/generate/${widget.deckId}'),
               icon: const Icon(Icons.add, size: 18),
               label: const Text('Generate more'),
+              style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
             ),
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
               child: const Text('Done'),
             ),
           ],
@@ -185,14 +195,8 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
                   ..rotateZ((_dragX / 300).clamp(-0.15, 0.15)),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
                 ),
                 child: Stack(
                   children: [
@@ -220,7 +224,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                           decoration: BoxDecoration(
                             color: _dragX > 0 ? Colors.green : Colors.red,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(30),
                           ),
                           child: Text(
                             _dragX > 0 ? 'EASY' : 'HARD',
@@ -284,7 +288,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(30),
             ),
             child: const Text('QUESTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primary, letterSpacing: 1)),
           ),
@@ -319,7 +323,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.green.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(30),
             ),
             child: const Text('ANSWER', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.green, letterSpacing: 1)),
           ),

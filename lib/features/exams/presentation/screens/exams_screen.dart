@@ -221,7 +221,7 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: Container(
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
             child: TextField(
               controller: _searchController,
               style: const TextStyle(color: AppColors.onSurface),
@@ -244,7 +244,7 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
                         final exam = _filteredSavedExams[index];
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
                           child: ListTile(
                             title: Text(exam['title'] ?? 'Exam Paper', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.onSurface)),
                             subtitle: Text(exam['date'] != null ? DateFormat('MMM d, yyyy').format(DateTime.parse(exam['date'])) : ''),
@@ -304,7 +304,7 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
           final sub = subjects[index];
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
             child: ListTile(
               leading: CircleAvatar(backgroundColor: AppColors.primary.withValues(alpha: 0.1), child: const Icon(Icons.menu_book_rounded, color: AppColors.primary)),
               title: Text(sub.name, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.onSurface)),
@@ -333,11 +333,15 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
               itemBuilder: (context, index) {
                 final ch = sub.chapters[index];
                 final isChecked = _selectedChapters.contains(ch);
-                return CheckboxListTile(
-                  title: Text(ch, style: const TextStyle(color: AppColors.onSurface, fontSize: 14)),
-                  value: isChecked,
-                  activeColor: AppColors.primary,
-                  onChanged: (val) { setState(() { if (val == true) { _selectedChapters.add(ch); } else { _selectedChapters.remove(ch); } }); },
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
+                  child: CheckboxListTile(
+                    title: Text(ch, style: const TextStyle(color: AppColors.onSurface, fontSize: 14)),
+                    value: isChecked,
+                    activeColor: AppColors.primary,
+                    onChanged: (val) { setState(() { if (val == true) { _selectedChapters.add(ch); } else { _selectedChapters.remove(ch); } }); },
+                  ),
                 );
               },
             ),
@@ -347,7 +351,7 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
             child: SizedBox(
               width: double.infinity, height: 50,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0),
                 onPressed: _selectedChapters.isEmpty ? null : () => setState(() => _currentStep = 3),
                 child: const Text("Continue to Paper Settings", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
@@ -380,9 +384,25 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
             const Text("Select Paper Type", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.onSurface)),
             const SizedBox(height: 10),
             Row(children: [
-              Expanded(child: ChoiceChip(label: const Center(child: Text("Test (Customizable)")), selected: _paperType == 'Test', onSelected: (val) { if (val) setState(() => _paperType = 'Test'); })),
+              Expanded(child: ChoiceChip(
+                label: Center(child: Text("Test (Customizable)", style: TextStyle(color: _paperType == 'Test' ? Colors.white : AppColors.onSurface))),
+                selected: _paperType == 'Test',
+                onSelected: (val) { if (val) setState(() => _paperType = 'Test'); },
+                backgroundColor: Colors.white,
+                selectedColor: AppColors.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                side: BorderSide(color: _paperType == 'Test' ? AppColors.primary : AppColors.primary.withValues(alpha: 0.4)),
+              )),
               const SizedBox(width: 12),
-              Expanded(child: ChoiceChip(label: const Center(child: Text("Full Exam (Board Pattern)")), selected: _paperType == 'Exam', onSelected: (val) { if (val) setState(() => _paperType = 'Exam'); })),
+              Expanded(child: ChoiceChip(
+                label: Center(child: Text("Full Exam (Board Pattern)", style: TextStyle(color: _paperType == 'Exam' ? Colors.white : AppColors.onSurface))),
+                selected: _paperType == 'Exam',
+                onSelected: (val) { if (val) setState(() => _paperType = 'Exam'); },
+                backgroundColor: Colors.white,
+                selectedColor: AppColors.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                side: BorderSide(color: _paperType == 'Exam' ? AppColors.primary : AppColors.primary.withValues(alpha: 0.4)),
+              )),
             ]),
             const SizedBox(height: 25),
             if (_paperType == 'Test') ...[
@@ -398,13 +418,13 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
             ] else ...[
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
                 child: Text("Generates a complete, authentic full-length exam style paper matching ${profile.boardName} standard distributions for Matric / Intermediate classes.", style: const TextStyle(color: AppColors.primary, fontSize: 13, height: 1.4)),
               ),
               const SizedBox(height: 30),
             ],
             SizedBox(width: double.infinity, height: 50, child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0),
               onPressed: () => _generatePaper(profile),
               child: const Text("Create Paper with AI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             )),
@@ -421,7 +441,7 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
               children: [
                 Row(children: [IconButton(icon: const Icon(Icons.close), onPressed: () => setState(() => _currentStep = 1)), const Text("Paper Preview", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.onSurface))]),
                 ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0),
                   onPressed: _downloadPdf,
                   icon: const Icon(Icons.picture_as_pdf, color: Colors.white, size: 16),
                   label: const Text("Export PDF", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -433,7 +453,7 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
               child: SingleChildScrollView(
                 child: SelectableText(_generatedPaperText, style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: AppColors.onSurface)),
               ),
