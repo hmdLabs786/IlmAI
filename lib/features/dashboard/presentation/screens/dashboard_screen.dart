@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/app_colors.dart';
 import '../../../../providers/auth_provider.dart';
 import '../../../../models/student_profile.dart';
-import '../../../onboarding/presentation/widgets/onboarding_tour.dart';
 import '../../../onboarding/presentation/screens/permission_request_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -62,36 +61,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
       if (!mounted) return;
     }
-    _showAppTour();
-  }
-
-  void _showAppTour() {
-    final size = MediaQuery.of(context).size;
-    final steps = [
-      OnboardingTourStep(
-        title: 'IlmAI Agent',
-        description: 'Chat with your personalised AI tutor, tuned to your board syllabus, class, and learning level.',
-        targetRect: (_) => Rect.fromCenter(center: Offset(size.width * 0.25, size.height * 0.42), width: 130, height: 130),
-      ),
-      OnboardingTourStep(
-        title: 'Mock Papers',
-        description: 'Generate AI-built board-pattern exam papers for any chapter — MCQs, short & long questions.',
-        targetRect: (_) => Rect.fromCenter(center: Offset(size.width * 0.75, size.height * 0.42), width: 130, height: 130),
-      ),
-      OnboardingTourStep(
-        title: 'News Feed',
-        description: 'Stay updated with live BSEK and BIEK board announcements, results, and date sheets.',
-        targetRect: (_) => Rect.fromCenter(center: Offset(size.width * 0.25, size.height * 0.54), width: 130, height: 130),
-      ),
-    ];
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.transparent,
-        pageBuilder: (_, __, ___) => OnboardingTour(steps: steps, child: const SizedBox.shrink()),
-        transitionsBuilder: (_, anim, __, child) => FadeTransition(opacity: CurvedAnimation(parent: anim, curve: Curves.easeIn), child: child),
-      ),
-    );
   }
 
   Future<void> _loadStats() async {
