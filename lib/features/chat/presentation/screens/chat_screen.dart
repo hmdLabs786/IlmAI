@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/widgets/smart_text.dart';
@@ -1226,34 +1225,33 @@ This is a demo response because the Gemini API key is not configured yet.
   // ─── INPUT BAR (floating pill redesign) ────────────────────────────
 
   Widget _buildInputBar(AuthProvider authProvider) {
+    final fieldColor = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF2A2A2A)
+        : Colors.white;
+    final borderColor = AppColors.primary.withValues(alpha: 0.5);
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (_selectedImage != null)
             Container(
-              margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.surfaceAltOf(context).withValues(alpha: 0.95),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: fieldColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: borderColor),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                     child: Image.file(
                       _selectedImage!,
-                      width: 32, height: 32,
+                      width: 28, height: 28,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -1282,136 +1280,103 @@ This is a demo response because the Gemini API key is not configured yet.
                 ],
               ),
             ),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  color: (Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : Colors.black87)
-                      .withValues(alpha: _selectedImage != null ? 0.12 : 0.06),
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.10),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // Send button (left)
+              GestureDetector(
+                onTap: _isGenerating
+                    ? null
+                    : () => _sendMessage(authProvider),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _isGenerating
+                        ? AppColors.onSurfaceMutedOf(context)
+                            .withValues(alpha: 0.12)
+                        : AppColors.primary,
+                    border: Border.all(
+                      color: _isGenerating
+                          ? Colors.transparent
+                          : AppColors.primary.withValues(alpha: 0.3),
                     ),
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.06),
-                      blurRadius: 24,
-                      offset: const Offset(0, 0),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    GestureDetector(
-                      onTap: _showImagePickerSheet,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 2, bottom: 2),
-                        child: Container(
-                          width: 44, height: 44,
-                          decoration: BoxDecoration(
-                            color: _selectedImage != null
-                                ? AppColors.primary.withValues(alpha: 0.15)
-                                : AppColors.primary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            _selectedImage != null
-                                ? Icons.image_rounded
-                                : Icons.add_photo_alternate_outlined,
-                            size: 20,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: TextField(
-                          controller: _messageController,
-                          focusNode: _inputFocus,
-                          minLines: 1,
-                          maxLines: 4,
-                          textInputAction: TextInputAction.send,
-                          style: TextStyle(
-                            color: AppColors.onSurfaceOf(context),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Message IlmAI...',
-                            hintStyle: TextStyle(
-                              color: AppColors.onSurfaceMutedOf(context)
-                                  .withValues(alpha: 0.5),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                                vertical: 16, horizontal: 4),
-                            isDense: true,
-                          ),
-                          onSubmitted: (_) => _sendMessage(authProvider),
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _isGenerating
-                          ? null
-                          : () => _sendMessage(authProvider),
-                      child: Container(
-                        width: 44, height: 44,
-                        margin: const EdgeInsets.only(right: 2, bottom: 2),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: _isGenerating
-                              ? null
-                              : const LinearGradient(
-                                  colors: [
-                                    AppColors.primary,
-                                    Color(0xFF0F2460),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                          color: _isGenerating
-                              ? AppColors.onSurfaceMutedOf(context)
-                                  .withValues(alpha: 0.12)
-                              : null,
-                          boxShadow: _isGenerating
-                              ? null
-                              : [
-                                  BoxShadow(
-                                    color: AppColors.primary
-                                        .withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                        ),
-                        child: Icon(
-                          _isGenerating
-                              ? Icons.hourglass_bottom_rounded
-                              : Icons.arrow_upward_rounded,
-                          color: _isGenerating
-                              ? AppColors.onSurfaceMutedOf(context)
-                              : Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
+                  child: Icon(
+                    _isGenerating
+                        ? Icons.hourglass_bottom_rounded
+                        : Icons.arrow_upward_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
               ),
-            ),
+              // Text field (pill)
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: fieldColor,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: borderColor.withValues(alpha: 0.4)),
+                  ),
+                  child: TextField(
+                    controller: _messageController,
+                    focusNode: _inputFocus,
+                    minLines: 1,
+                    maxLines: 4,
+                    textInputAction: TextInputAction.send,
+                    style: TextStyle(
+                      color: AppColors.onSurfaceOf(context),
+                      fontSize: 15,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Ask IlmAI...',
+                      hintStyle: TextStyle(
+                        color: AppColors.onSurfaceMutedOf(context)
+                            .withValues(alpha: 0.5),
+                        fontSize: 15,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 16),
+                      isDense: true,
+                    ),
+                    onSubmitted: (_) => _sendMessage(authProvider),
+                  ),
+                ),
+              ),
+              // Image picker (right)
+              GestureDetector(
+                onTap: _showImagePickerSheet,
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  margin: const EdgeInsets.only(left: 8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _selectedImage != null
+                        ? AppColors.primary.withValues(alpha: 0.1)
+                        : fieldColor,
+                    border: Border.all(
+                      color: _selectedImage != null
+                          ? AppColors.primary
+                          : borderColor.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Icon(
+                    _selectedImage != null
+                        ? Icons.image_rounded
+                        : Icons.add_photo_alternate_outlined,
+                    size: 22,
+                    color: _selectedImage != null
+                        ? AppColors.primary
+                        : AppColors.primary.withValues(alpha: 0.7),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
