@@ -125,8 +125,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 12),
           _buildQuickActions(tier),
-          const SizedBox(height: 24),
-          _buildBoardUpdates(),
           if (_recentActivities.isNotEmpty) ...[
             const SizedBox(height: 24),
             Padding(
@@ -410,114 +408,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildBoardUpdates() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: _buildSectionHeader('Board Updates', Icons.campaign_rounded),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 160,
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('board_news')
-                .orderBy('timestamp', descending: true)
-                .limit(5)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-              }
-              if (snapshot.hasError || !snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return Center(
-                  child: Text('No board updates yet',
-                    style: TextStyle(color: AppColors.onSurfaceMutedOf(context), fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                );
-              }
-              final newsList = snapshot.data!.docs.map((d) {
-                final data = d.data() as Map<String, dynamic>;
-                final id = d.id;
-                final title = data['title']?.toString() ?? '';
-                final originalUrl = data['originalUrl']?.toString() ?? '';
-                final source = data['source']?.toString() ?? '';
-                final category = data['category']?.toString() ?? 'General';
-                final imageUrl = data['imageUrl']?.toString() ?? '';
-                final timestamp = data['timestamp'] as Timestamp?;
-                return _BoardNewsItem(id: id, title: title, originalUrl: originalUrl, source: source, category: category, imageUrl: imageUrl, timestamp: timestamp);
-              }).toList();
-              return ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: newsList.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (_, i) {
-                  final n = newsList[i];
-                  return GestureDetector(
-                    onTap: () => context.go('/news-feed'),
-                    child: Container(
-                      width: 200,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceAltOf(context),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppColors.borderOf(context)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: n.source == 'BSEK' ? const Color(0xFFD97706).withValues(alpha: 0.12) : const Color(0xFF7C3AED).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(n.source,
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
-                                    color: n.source == 'BSEK' ? const Color(0xFFD97706) : const Color(0xFF7C3AED),
-                                  ),
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(n.category, style: TextStyle(fontSize: 10, color: AppColors.onSurfaceMutedOf(context), fontWeight: FontWeight.w500)),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Expanded(
-                            child: Text(n.title,
-                              maxLines: 3, overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.onSurfaceOf(context), height: 1.4),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(Icons.schedule_rounded, size: 11, color: AppColors.onSurfaceMutedOf(context)),
-                              const SizedBox(width: 4),
-                              Text(
-                                n.timestamp != null ? DateFormat('MMM d').format(n.timestamp!.toDate()) : 'Recent',
-                                style: TextStyle(fontSize: 10, color: AppColors.onSurfaceMutedOf(context), fontWeight: FontWeight.w500),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildActivityTimeline() {
     return Container(
       decoration: BoxDecoration(
@@ -637,17 +527,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-}
-
-class _BoardNewsItem {
-  final String id;
-  final String title;
-  final String originalUrl;
-  final String source;
-  final String category;
-  final String imageUrl;
-  final Timestamp? timestamp;
-  _BoardNewsItem({required this.id, required this.title, required this.originalUrl, required this.source, required this.category, required this.imageUrl, this.timestamp});
 }
 
 class _StatCard extends StatelessWidget {
