@@ -45,7 +45,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _checkFirstTimeUser() async {
     final prefs = await SharedPreferences.getInstance();
-    final isFirst = prefs.getBool('is_first_time_user') ?? true;
+    final isFirst = prefs.getBool('is_first_launch') ?? true;
     if (!isFirst || !mounted) return;
     await Future.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
