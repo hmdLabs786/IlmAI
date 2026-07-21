@@ -187,8 +187,17 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
         preferredSize: const Size.fromHeight(50),
         child: AppBar(
           backgroundColor: Colors.transparent, elevation: 0, automaticallyImplyLeading: false,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 4),
+          bottom: TabBar(controller: _tabController, indicatorColor: AppColors.primary, labelColor: AppColors.primary, unselectedLabelColor: AppColors.onSurfaceMuted, tabs: const [Tab(text: "Generate Papers"), Tab(text: "Saved Papers")]),
+        ),
+      ),
+      body: Stack(
+        children: [
+          TabBarView(controller: _tabController, children: [
+            _buildGeneratorTab(subjects, profile),
+            _buildSavedTab(),
+          ]),
+          Positioned(
+            top: 4, left: 8,
             child: Container(
               width: 36, height: 36,
               decoration: BoxDecoration(
@@ -199,17 +208,12 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
               child: IconButton(
                 padding: EdgeInsets.zero,
                 icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
-                onPressed: () => context.pop(),
+                onPressed: () => context.go('/'),
               ),
             ),
           ),
-          bottom: TabBar(controller: _tabController, indicatorColor: AppColors.primary, labelColor: AppColors.primary, unselectedLabelColor: AppColors.onSurfaceMuted, tabs: const [Tab(text: "Generate Papers"), Tab(text: "Saved Papers")]),
-        ),
+        ],
       ),
-      body: TabBarView(controller: _tabController, children: [
-        _buildGeneratorTab(subjects, profile),
-        _buildSavedTab(),
-      ]),
     );
   }
 
@@ -261,48 +265,52 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
                         final exam = _filteredSavedExams[index];
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
+                          clipBehavior: Clip.antiAlias,
                           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
-                          child: ListTile(
-                            title: Text(exam['title'] ?? 'Exam Paper', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.onSurface)),
-                            subtitle: Text(exam['date'] != null ? DateFormat('MMM d, yyyy').format(DateTime.parse(exam['date'])) : ''),
-                            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.primary),
-                            onTap: () {
-                              showModalBottomSheet(
-                                context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-                                builder: (context) => Container(
-                                  height: MediaQuery.of(context).size.height * 0.8,
-                                  decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(20),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(exam['title'] ?? '', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                            Row(children: [
-                                              IconButton(icon: const Icon(Icons.download, color: Colors.green), onPressed: () {
-                                                _generatedPaperText = exam['content'] ?? '';
-                                                _downloadPdf();
-                                              }),
-                                              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-                                            ]),
-                                          ],
-                                        ),
-                                      ),
-                                      const Divider(),
-                                      Expanded(
-                                        child: SingleChildScrollView(
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: ListTile(
+                              title: Text(exam['title'] ?? 'Exam Paper', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.onSurface)),
+                              subtitle: Text(exam['date'] != null ? DateFormat('MMM d, yyyy').format(DateTime.parse(exam['date'])) : ''),
+                              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.primary),
+                              onTap: () {
+                                showModalBottomSheet(
+                                  context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+                                  builder: (context) => Container(
+                                    height: MediaQuery.of(context).size.height * 0.8,
+                                    decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
                                           padding: const EdgeInsets.all(20),
-                                          child: SelectableText(exam['content'] ?? '', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: AppColors.onSurface, height: 1.5)),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(exam['title'] ?? '', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                              Row(children: [
+                                                IconButton(icon: const Icon(Icons.download, color: Colors.green), onPressed: () {
+                                                  _generatedPaperText = exam['content'] ?? '';
+                                                  _downloadPdf();
+                                                }),
+                                                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                                              ]),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                        const Divider(),
+                                        Expanded(
+                                          child: SingleChildScrollView(
+                                            padding: const EdgeInsets.all(20),
+                                            child: SelectableText(exam['content'] ?? '', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: AppColors.onSurface, height: 1.5)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                         );
                       },
@@ -322,13 +330,13 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
-            child: ListTile(
+            child: Material(type: MaterialType.transparency, child: ListTile(
               leading: CircleAvatar(backgroundColor: AppColors.primary.withValues(alpha: 0.1), child: const Icon(Icons.menu_book_rounded, color: AppColors.primary)),
               title: Text(sub.name, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.onSurface)),
               subtitle: Text("${sub.chapters.length} chapters available"),
               trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
               onTap: () { setState(() { _selectedSubject = sub; _selectedChapters.clear(); _currentStep = 2; }); },
-            ),
+            ),),
           );
         },
       );

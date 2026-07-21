@@ -186,7 +186,7 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
               child: IconButton(
                 padding: EdgeInsets.zero,
                 icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
-                onPressed: () => context.pop(),
+                onPressed: () => context.go('/'),
               ),
             ),
           ),
@@ -344,8 +344,9 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(color: AppColors.surfaceOf(context), borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.primary.withValues(alpha: 0.4))),
-        child: ListTile(
+        child: Material(type: MaterialType.transparency, child: ListTile(
           title: Text(note['title'] ?? 'Revision Note', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.onSurface)),
           subtitle: Text(note['date'] != null ? DateFormat('MMM d, yyyy').format(DateTime.parse(note['date'])) : ''),
           trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.primary),
@@ -378,6 +379,7 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
             );
           },
         ),
+      ),
       ),
     );
   }

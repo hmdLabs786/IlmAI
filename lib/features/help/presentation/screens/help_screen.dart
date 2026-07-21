@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/app_colors.dart';
@@ -144,7 +145,7 @@ class _HelpScreenState extends State<HelpScreen> {
               child: IconButton(
                 padding: EdgeInsets.zero,
                 icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => context.go('/'),
               ),
             ),
           ),

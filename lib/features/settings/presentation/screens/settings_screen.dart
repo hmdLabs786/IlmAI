@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/app_colors.dart';
 import '../../../../main.dart';
@@ -136,7 +137,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               child: IconButton(
                 padding: EdgeInsets.zero,
                 icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => context.go('/'),
               ),
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
@@ -151,7 +152,7 @@ class _FlashcardGenerateScreenState extends State<FlashcardGenerateScreen> {
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => context.go('/'),
                       ),
                     ),
                   ),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -304,7 +305,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         child: IconButton(
                           padding: EdgeInsets.zero,
                           icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () => context.go('/'),
                         ),
                       ),
                       const SizedBox(width: 12),

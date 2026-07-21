@@ -104,7 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: IconButton(
                   padding: EdgeInsets.zero,
                   icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
-                  onPressed: () => context.pop(),
+                  onPressed: () => context.go('/'),
                 ),
               ),
             ),
