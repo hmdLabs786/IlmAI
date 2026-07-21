@@ -22,7 +22,8 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ChatFirestoreService _chatService = ChatFirestoreService();
@@ -35,13 +36,35 @@ class _ChatScreenState extends State<ChatScreen> {
   List<ChatMessageModel> _messages = [];
   File? _selectedImage;
 
-  static const String _envApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+  late AnimationController _sidebarCtrl;
+  late Animation<Offset> _sidebarSlide;
+  bool _sidebarOpen = false;
+
+  static const String _envApiKey =
+      String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
 
   String get _geminiApiKey {
-    if (AppConfig.geminiApiKey.isNotEmpty && AppConfig.geminiApiKey != 'YOUR_GEMINI_API_KEY_HERE') {
+    if (AppConfig.geminiApiKey.isNotEmpty &&
+        AppConfig.geminiApiKey != 'YOUR_GEMINI_API_KEY_HERE') {
       return AppConfig.geminiApiKey;
     }
     return _envApiKey;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _sidebarCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+    );
+    _sidebarSlide = Tween<Offset>(
+      begin: const Offset(-1, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _sidebarCtrl,
+      curve: Curves.easeOutCubic,
+    ));
   }
 
   @override
@@ -49,7 +72,24 @@ class _ChatScreenState extends State<ChatScreen> {
     _messagesSubscription?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
+    _sidebarCtrl.dispose();
     super.dispose();
+  }
+
+  void _toggleSidebar() {
+    if (_sidebarOpen) {
+      _sidebarCtrl.reverse();
+    } else {
+      _sidebarCtrl.forward();
+    }
+    setState(() => _sidebarOpen = !_sidebarOpen);
+  }
+
+  void _closeSidebar() {
+    if (_sidebarOpen) {
+      _sidebarCtrl.reverse();
+      setState(() => _sidebarOpen = false);
+    }
   }
 
   void _scrollToBottom() {
@@ -70,7 +110,8 @@ class _ChatScreenState extends State<ChatScreen> {
       _messages = [];
       _streamingText = '';
     });
-    _messagesSubscription = _chatService.getMessagesStream(chatId).listen((messages) {
+    _messagesSubscription =
+        _chatService.getMessagesStream(chatId).listen((messages) {
       if (!mounted) return;
       setState(() => _messages = messages);
       _scrollToBottom();
@@ -78,6 +119,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _startNewChat(String userId) async {
+    _closeSidebar();
     final title = 'New Chat ${TimeOfDay.now().format(context)}';
     final chatId = await _chatService.createChat(userId, title);
     _selectChat(chatId);
@@ -85,9 +127,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String _levelLabel(StudentLevel level) {
     switch (level) {
-      case StudentLevel.developing: return 'Weak';
-      case StudentLevel.average: return 'Average';
-      case StudentLevel.advanced: return 'Intelligent';
+      case StudentLevel.developing:
+        return 'Weak';
+      case StudentLevel.average:
+        return 'Average';
+      case StudentLevel.advanced:
+        return 'Intelligent';
     }
   }
 
@@ -206,24 +251,27 @@ $userText
 
     final tier = authProvider.subscriptionTier;
 
-    // Gate: image upload requires Pro+
     if (_selectedImage != null) {
-      final canImage = await SubscriptionGateManager.canUploadImage(user.uid, tier);
+      final canImage =
+          await SubscriptionGateManager.canUploadImage(user.uid, tier);
       if (!canImage) {
         if (SubscriptionGateManager.isFree(tier)) {
           SubscriptionGateManager.showImageScanRequiresProDialog(context);
         } else {
           final max = SubscriptionGateManager.dailyImageUploadLimit(tier);
-          SubscriptionGateManager.showLimitDialog(context, tier, 'Image Uploads', max);
+          SubscriptionGateManager.showLimitDialog(
+              context, tier, 'Image Uploads', max);
         }
         return;
       }
     }
 
-    // Gate: daily chat message limit
     if (!await SubscriptionGateManager.canChat(user.uid, tier)) {
       final max = SubscriptionGateManager.dailyChatMessageLimit(tier);
-      if (mounted) SubscriptionGateManager.showLimitDialog(context, tier, 'Chat Messages', max);
+      if (mounted) {
+        SubscriptionGateManager.showLimitDialog(
+            context, tier, 'Chat Messages', max);
+      }
       return;
     }
 
@@ -252,18 +300,23 @@ $userText
       localImagePath = await _saveImageLocally(imageToSend);
     }
 
-    await _chatService.addMessage(chatId, 'user', userText, imageUrl: localImagePath);
+    await _chatService.addMessage(
+        chatId, 'user', userText, imageUrl: localImagePath);
 
     final existingContext = _messages
-        .map((msg) => Content(msg.sender == 'user' ? 'user' : 'model', [
-              TextPart(msg.text),
-            ]))
+        .map((msg) => Content(
+              msg.sender == 'user' ? 'user' : 'model',
+              [TextPart(msg.text)],
+            ))
         .toList();
     final prompt = _buildTutorPrompt(profile, userText);
 
     try {
       if (_messages.length <= 1) {
-        await _chatService.updateChatTitle(chatId, _buildTitleFromText(userText.isNotEmpty ? userText : 'Image question'));
+        await _chatService.updateChatTitle(
+            chatId,
+            _buildTitleFromText(
+                userText.isNotEmpty ? userText : 'Image question'));
       }
 
       if (_geminiApiKey.isEmpty) {
@@ -316,9 +369,11 @@ This is a demo response because the Gemini API key is not configured yet.
       if (finalText.isNotEmpty) {
         await _chatService.addMessage(chatId, 'ai', finalText);
       }
-      await SubscriptionGateManager.incrementDailyUsage(user.uid, 'chatMessagesCount');
+      await SubscriptionGateManager.incrementDailyUsage(
+          user.uid, 'chatMessagesCount');
       if (imageToSend != null) {
-        await SubscriptionGateManager.incrementDailyUsage(user.uid, 'imageUploadsCount');
+        await SubscriptionGateManager.incrementDailyUsage(
+            user.uid, 'imageUploadsCount');
       }
     } catch (e) {
       if (mounted) {
@@ -379,144 +434,14 @@ This is a demo response because the Gemini API key is not configured yet.
             child: Icon(icon, color: AppColors.primary, size: 32),
           ),
           const SizedBox(height: 8),
-          Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.onSurfaceOf(context))),
+          Text(
+            label,
+            style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.onSurfaceOf(context)),
+          ),
         ],
       ),
-    );
-  }
-
-  void _showHistorySheet(String userId) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.78,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceAltOf(context),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-          child: Column(
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 10), width: 42, height: 5,
-                decoration: BoxDecoration(color: AppColors.borderOf(context), borderRadius: BorderRadius.circular(99)),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Conversation History', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.onSurfaceOf(context))),
-                          const SizedBox(height: 4),
-                          Text('Your previous IlmAI chats are stored in Firebase.', style: TextStyle(fontSize: 12, color: AppColors.onSurfaceMutedOf(context))),
-                        ],
-                      ),
-                    ),
-                    FilledButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _startNewChat(userId);
-                      },
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('New Chat'),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: StreamBuilder<List<ChatSessionModel>>(
-                  stream: _chatService.getChatsStream(userId),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    final chats = snapshot.data ?? const [];
-                    if (chats.isEmpty) {
-                      return Center(
-                        child: Text('No chats yet.', style: TextStyle(color: AppColors.onSurfaceMutedOf(context))),
-                      );
-                    }
-                    return ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: chats.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final chat = chats[index];
-                        final selected = chat.id == _currentChatId;
-                        return InkWell(
-                          onTap: () {
-                            Navigator.pop(context);
-                            _selectChat(chat.id);
-                          },
-                          borderRadius: BorderRadius.circular(18),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: selected ? AppColors.primary.withValues(alpha: 0.08) : AppColors.surfaceOf(context),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: selected ? AppColors.primary.withValues(alpha: 0.35) : AppColors.borderOf(context),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  backgroundColor: selected ? AppColors.primary : AppColors.primary.withValues(alpha: 0.12),
-                                  child: Icon(Icons.chat_bubble_outline_rounded, color: selected ? Colors.white : AppColors.primary, size: 18),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(chat.title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.onSurfaceOf(context))),
-                                      const SizedBox(height: 3),
-                                      Text(_formatDate(chat.createdAt), style: TextStyle(fontSize: 12, color: AppColors.onSurfaceMutedOf(context))),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () async {
-                                    final confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: const Text('Delete Chat?'),
-                                        content: const Text('This will permanently delete the chat and its messages.'),
-                                        actions: [
-                                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                          TextButton(onPressed: () => Navigator.pop(ctx, true), style: TextButton.styleFrom(foregroundColor: Colors.red), child: const Text('Delete')),
-                                        ],
-                                      ),
-                                    );
-                                    if (confirm == true) {
-                                      await _chatService.deleteChat(chat.id);
-                                      if (_currentChatId == chat.id && mounted) {
-                                        setState(() { _currentChatId = null; _messages = []; });
-                                      }
-                                    }
-                                  },
-                                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -526,7 +451,7 @@ This is a demo response because the Gemini API key is not configured yet.
     final hour = hour24 % 12 == 0 ? 12 : hour24 % 12;
     final minute = local.minute.toString().padLeft(2, '0');
     final period = hour24 >= 12 ? 'PM' : 'AM';
-    return '${local.month}/${local.day}/${local.year} • $hour:$minute $period';
+    return '${local.month}/${local.day}/${local.year}  $hour:$minute $period';
   }
 
   Widget _buildShimmerLoading() {
@@ -539,21 +464,43 @@ This is a demo response because the Gemini API key is not configured yet.
           decoration: BoxDecoration(
             color: AppColors.surfaceOf(context),
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(18), topRight: Radius.circular(18),
-              bottomLeft: Radius.circular(4), bottomRight: Radius.circular(18),
+              topLeft: Radius.circular(18),
+              topRight: Radius.circular(18),
+              bottomLeft: Radius.circular(4),
+              bottomRight: Radius.circular(18),
             ),
             border: Border.all(color: AppColors.borderOf(context)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(width: 40, height: 10, decoration: BoxDecoration(color: AppColors.shimmerBase, borderRadius: BorderRadius.circular(4))),
+              Container(
+                  width: 40,
+                  height: 10,
+                  decoration: BoxDecoration(
+                      color: AppColors.shimmerBase,
+                      borderRadius: BorderRadius.circular(4))),
               const SizedBox(height: 10),
-              Container(width: 220, height: 10, decoration: BoxDecoration(color: AppColors.shimmerBase, borderRadius: BorderRadius.circular(4))),
+              Container(
+                  width: 220,
+                  height: 10,
+                  decoration: BoxDecoration(
+                      color: AppColors.shimmerBase,
+                      borderRadius: BorderRadius.circular(4))),
               const SizedBox(height: 6),
-              Container(width: 180, height: 10, decoration: BoxDecoration(color: AppColors.shimmerBase, borderRadius: BorderRadius.circular(4))),
+              Container(
+                  width: 180,
+                  height: 10,
+                  decoration: BoxDecoration(
+                      color: AppColors.shimmerBase,
+                      borderRadius: BorderRadius.circular(4))),
               const SizedBox(height: 6),
-              Container(width: 100, height: 10, decoration: BoxDecoration(color: AppColors.shimmerBase, borderRadius: BorderRadius.circular(4))),
+              Container(
+                  width: 100,
+                  height: 10,
+                  decoration: BoxDecoration(
+                      color: AppColors.shimmerBase,
+                      borderRadius: BorderRadius.circular(4))),
             ],
           ),
         ),
@@ -561,25 +508,12 @@ This is a demo response because the Gemini API key is not configured yet.
     );
   }
 
-  Widget _buildSuggestionChip(String text) {
-    return ActionChip(
-      label: Text(text),
-      backgroundColor: AppColors.surfaceAltOf(context).withValues(alpha: 0.9),
-      side: BorderSide(color: AppColors.primary.withValues(alpha: 0.12)),
-      labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.primary),
-      onPressed: () {
-        _messageController.text = text;
-        _messageController.selection = TextSelection.fromPosition(
-          TextPosition(offset: _messageController.text.length),
-        );
-      },
-    );
-  }
-
   Widget _buildAIContent(String text) {
-    final blocks = text.split('\n\n').where((b) => b.trim().isNotEmpty).toList();
+    final blocks =
+        text.split('\n\n').where((b) => b.trim().isNotEmpty).toList();
     final children = <Widget>[];
-    final baseStyle = TextStyle(fontSize: 15, height: 1.5, color: AppColors.onSurfaceOf(context));
+    final baseStyle = TextStyle(
+        fontSize: 15, height: 1.5, color: AppColors.onSurfaceOf(context));
 
     for (final block in blocks) {
       final trimmed = block.trim();
@@ -588,13 +522,27 @@ This is a demo response because the Gemini API key is not configured yet.
         final headingText = trimmed.substring(3).trim();
         children.add(Padding(
           padding: const EdgeInsets.only(top: 12, bottom: 6),
-          child: SmartText(headingText, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.onSurfaceOf(context), height: 1.4)),
+          child: SmartText(
+            headingText,
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.onSurfaceOf(context),
+                height: 1.4),
+          ),
         ));
       } else if (trimmed.startsWith('# ')) {
         final headingText = trimmed.substring(2).trim();
         children.add(Padding(
           padding: const EdgeInsets.only(top: 14, bottom: 8),
-          child: SmartText(headingText, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.onSurfaceOf(context), height: 1.3)),
+          child: SmartText(
+            headingText,
+            style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: AppColors.onSurfaceOf(context),
+                height: 1.3),
+          ),
         ));
       } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
         final lines = trimmed.split('\n');
@@ -603,7 +551,7 @@ This is a demo response because the Gemini API key is not configured yet.
           if (itemText.isEmpty) continue;
           children.add(Padding(
             padding: const EdgeInsets.only(left: 8, bottom: 4),
-            child: SmartText('•  $itemText', style: baseStyle),
+            child: SmartText('  $itemText', style: baseStyle),
           ));
         }
       } else if (RegExp(r'^\d+[\.\)] ').hasMatch(trimmed)) {
@@ -629,43 +577,490 @@ This is a demo response because the Gemini API key is not configured yet.
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: children.isNotEmpty ? children : [SmartText(text, style: baseStyle)],
+      children:
+          children.isNotEmpty ? children : [SmartText(text, style: baseStyle)],
     );
   }
 
-  Widget _buildMessageBubble(ChatMessageModel message, {int index = -1}) {
-    final isUser = message.sender == 'user';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Align(
-        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: isUser ? AppColors.primary : AppColors.surfaceOf(context),
-              borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(18),
-                topRight: const Radius.circular(18),
-                bottomLeft: Radius.circular(isUser ? 18 : 4),
-                bottomRight: Radius.circular(isUser ? 4 : 18),
+  // ─── SIDEBAR ─────────────────────────────────────────────────────────
+
+  Widget _buildSidebar(String userId) {
+    return Material(
+      elevation: 0,
+      color: Colors.transparent,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 290,
+            child: Container(
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceOf(context),
+                borderRadius:
+                    const BorderRadius.horizontal(right: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 40,
+                    offset: const Offset(4, 0),
+                  ),
+                ],
               ),
-              border: isUser ? null : Border.all(color: AppColors.borderOf(context)),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: FilledButton.icon(
+                        onPressed: () => _startNewChat(userId),
+                        style: FilledButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        icon: const Icon(Icons.add_rounded, size: 20),
+                        label: const Text('New Chat'),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Chat History',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.onSurfaceMutedOf(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: StreamBuilder<List<ChatSessionModel>>(
+                      stream: _chatService.getChatsStream(userId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2));
+                        }
+                        final chats = snapshot.data ?? const [];
+                        if (chats.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'No chats yet.\nStart a new conversation!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.onSurfaceMutedOf(context),
+                                height: 1.5,
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: chats.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 4),
+                          itemBuilder: (context, index) {
+                            final chat = chats[index];
+                            final selected = chat.id == _currentChatId;
+                            return InkWell(
+                              onTap: () {
+                                _closeSidebar();
+                                _selectChat(chat.id);
+                              },
+                              borderRadius:
+                                  BorderRadius.circular(14),
+                              child: AnimatedContainer(
+                                duration:
+                                    const Duration(milliseconds: 200),
+                                padding:
+                                    const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: selected
+                                      ? AppColors.primary
+                                          .withValues(alpha: 0.08)
+                                      : Colors.transparent,
+                                  borderRadius:
+                                      BorderRadius.circular(14),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.chat_bubble_outline_rounded,
+                                      size: 18,
+                                      color: selected
+                                          ? AppColors.primary
+                                          : AppColors
+                                              .onSurfaceMutedOf(context),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            chat.title,
+                                            maxLines: 1,
+                                            overflow:
+                                                TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: selected
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500,
+                                              color: AppColors
+                                                  .onSurfaceOf(context),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            _formatDate(chat.createdAt),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors
+                                                  .onSurfaceMutedOf(
+                                                      context),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (selected)
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    const SizedBox(width: 4),
+                                    GestureDetector(
+                                      onTap: () async {
+                                        final confirm =
+                                            await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) =>
+                                              AlertDialog(
+                                            title: const Text(
+                                                'Delete Chat?'),
+                                            content: const Text(
+                                                'This will permanently delete the chat and its messages.'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(
+                                                        ctx, false),
+                                                child:
+                                                    const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(
+                                                        ctx, true),
+                                                style: TextButton
+                                                    .styleFrom(
+                                                  foregroundColor:
+                                                      Colors.red,
+                                                ),
+                                                child:
+                                                    const Text('Delete'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm == true) {
+                                          await _chatService
+                                              .deleteChat(chat.id);
+                                          if (_currentChatId ==
+                                                  chat.id &&
+                                              mounted) {
+                                            setState(() {
+                                              _currentChatId = null;
+                                              _messages = [];
+                                            });
+                                          }
+                                        }
+                                      },
+                                      child: Icon(
+                                        Icons
+                                            .delete_outline_rounded,
+                                        size: 18,
+                                        color: Colors.red
+                                            .withValues(alpha: 0.5),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+          const Spacer(),
+        ],
+      ),
+    );
+  }
+
+  // ─── GREETING STATE ───────────────────────────────────────────────────
+
+  Widget _buildGreetingState(
+      StudentProfile profile, String userId) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 20),
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.20),
+                    AppColors.primary.withValues(alpha: 0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: const Icon(
+                Icons.auto_stories_rounded,
+                size: 48,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 28),
+            Text(
+              'Unlock Your\nAcademic Potential',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                color: AppColors.onSurfaceOf(context),
+                height: 1.15,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Master your ${profile.boardName} syllabus with AI-powered tutoring tailored to your pace.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.5,
+                color: AppColors.onSurfaceMutedOf(context),
+              ),
+            ),
+            const SizedBox(height: 32),
+            _buildSubjectGrid(),
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: FilledButton.icon(
+                onPressed: () => _startNewChat(userId),
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                icon: const Icon(Icons.chat_bubble_outline_rounded,
+                    size: 20),
+                label: const Text(
+                  'Start Learning',
+                  style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubjectGrid() {
+    final subjects = <MapEntry<String, IconData>>[
+      MapEntry('Mathematics', Icons.calculate_rounded),
+      MapEntry('Physics', Icons.science_rounded),
+      MapEntry('Chemistry', Icons.biotech_rounded),
+      MapEntry('Biology', Icons.pets_rounded),
+      MapEntry('Computer', Icons.computer_rounded),
+      MapEntry('English', Icons.menu_book_rounded),
+    ];
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      alignment: WrapAlignment.center,
+      children: subjects.map((s) {
+        return GestureDetector(
+          onTap: () {
+            _messageController.text =
+                'Help me study ${s.key} for my upcoming exam';
+          },
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.10),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(s.value, size: 16, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  s.key,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ─── TOP BAR ────────────────────────────────────────────────────────
+
+  Widget _buildTopBar(StudentProfile profile) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 12, 12, 8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceOf(context),
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.borderOf(context).withValues(alpha: 0.4),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: _toggleSidebar,
+            icon: Icon(
+              Icons.menu_rounded,
+              color: AppColors.onSurfaceOf(context),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.auto_awesome_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isUser ? 'You' : 'IlmAI',
+                  'IlmAI',
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: isUser ? Colors.white.withValues(alpha: 0.75) : AppColors.primary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.onSurfaceOf(context),
                   ),
                 ),
-                const SizedBox(height: 8),
-                if (message.imageUrl != null && message.imageUrl!.isNotEmpty)
+                Text(
+                  '${profile.boardName}  Class ${profile.studentClass}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.onSurfaceMutedOf(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () => context.push('/menu'),
+            icon: Icon(
+              Icons.more_horiz_rounded,
+              color: AppColors.onSurfaceOf(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── MESSAGES ───────────────────────────────────────────────────────
+
+  Widget _buildMessageBubble(ChatMessageModel message, {int index = -1}) {
+    final isUser = message.sender == 'user';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Align(
+        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints:
+              BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: isUser
+                  ? AppColors.primary
+                  : AppColors.surfaceOf(context),
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(20),
+                topRight: const Radius.circular(20),
+                bottomLeft:
+                    Radius.circular(isUser ? 20 : 4),
+                bottomRight:
+                    Radius.circular(isUser ? 4 : 20),
+              ),
+              border: isUser
+                  ? null
+                  : Border.all(color: AppColors.borderOf(context)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (message.imageUrl != null &&
+                    message.imageUrl!.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: ClipRRect(
@@ -678,7 +1073,10 @@ This is a demo response because the Gemini API key is not configured yet.
                         errorBuilder: (_, __, ___) => Container(
                           height: 120,
                           color: Colors.grey.withValues(alpha: 0.2),
-                          child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                          child: const Center(
+                            child: Icon(Icons.broken_image,
+                                color: Colors.grey),
+                          ),
                         ),
                       ),
                     ),
@@ -687,25 +1085,34 @@ This is a demo response because the Gemini API key is not configured yet.
                   isUser
                       ? SmartText(
                           message.text,
-                          style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.white),
+                          style: const TextStyle(
+                              fontSize: 15,
+                              height: 1.5,
+                              color: Colors.white),
                         )
                       : _buildAIContent(message.text),
                 if (!isUser && index >= 0)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.only(top: 10),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         SizedBox(
-                          width: 28, height: 28,
+                          width: 28,
+                          height: 28,
                           child: IconButton(
                             onPressed: () {
-                              Clipboard.setData(ClipboardData(text: message.text));
+                              Clipboard.setData(
+                                  ClipboardData(text: message.text));
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Response copied'), duration: Duration(seconds: 2)),
+                                const SnackBar(
+                                  content: Text('Response copied'),
+                                  duration: Duration(seconds: 2),
+                                ),
                               );
                             },
-                            icon: const Icon(Icons.copy_rounded, size: 16),
+                            icon: const Icon(Icons.copy_rounded,
+                                size: 15),
                             padding: EdgeInsets.zero,
                             color: AppColors.onSurfaceMutedOf(context),
                             tooltip: 'Copy response',
@@ -722,6 +1129,92 @@ This is a demo response because the Gemini API key is not configured yet.
     );
   }
 
+  // ─── INPUT BAR ─────────────────────────────────────────────────────
+
+  Widget _buildInputBar(AuthProvider authProvider) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceOf(context),
+        border: Border(
+          top: BorderSide(
+              color: AppColors.borderOf(context).withValues(alpha: 0.4)),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAltOf(context),
+              borderRadius: BorderRadius.circular(24),
+              border:
+                  Border.all(color: AppColors.borderOf(context)),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: _showImagePickerSheet,
+                  icon: Icon(
+                    _selectedImage != null
+                        ? Icons.image_rounded
+                        : Icons.add_photo_alternate_outlined,
+                    color: _selectedImage != null
+                        ? AppColors.primary
+                        : AppColors.onSurfaceMutedOf(context),
+                  ),
+                ),
+                Container(
+                  width: 220,
+                  constraints: const BoxConstraints(maxHeight: 120),
+                  child: TextField(
+                    controller: _messageController,
+                    minLines: 1,
+                    maxLines: 4,
+                    textInputAction: TextInputAction.send,
+                    style: TextStyle(
+                        color: AppColors.onSurfaceOf(context)),
+                    decoration: InputDecoration(
+                      hintText: 'Ask anything...',
+                      hintStyle: TextStyle(
+                        color: AppColors.onSurfaceMutedOf(context),
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 14),
+                      isDense: true,
+                    ),
+                    onSubmitted:
+                        (_) => _sendMessage(authProvider),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, Color(0xFF0F2D6B)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: IconButton(
+              onPressed:
+                  _isGenerating ? null : () => _sendMessage(authProvider),
+              icon: const Icon(Icons.arrow_upward_rounded,
+                  color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── BUILD ────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
@@ -732,211 +1225,65 @@ This is a demo response because the Gemini API key is not configured yet.
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Container(
-      color: AppColors.surfaceAltOf(context),
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceAltOf(context),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.borderOf(context)),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 24, offset: const Offset(0, 10))],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('IlmAI Agent', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.onSurfaceOf(context))),
-                          const SizedBox(height: 4),
-                          Text('Board-aligned study chat for ${profile.promptSummary}.', style: TextStyle(fontSize: 12, color: AppColors.onSurfaceMutedOf(context))),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Chat history',
-                      onPressed: () => _showHistorySheet(user.uid),
-                      icon: Icon(Icons.history_rounded, color: AppColors.onSurfaceOf(context)),
-                    ),
-                    IconButton(
-                      tooltip: 'New chat',
-                      onPressed: () => _startNewChat(user.uid),
-                      icon: Icon(Icons.add_comment_rounded, color: AppColors.onSurfaceOf(context)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8, runSpacing: 8,
-                  children: [
-                    _profileChip('Class ${profile.studentClass}'),
-                    _profileChip(profile.boardName),
-                    _profileChip(profile.levelName),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (_currentChatId == null)
-            Container(
-              margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildSuggestionChip('Explain this chapter in simple words'),
-                    const SizedBox(width: 8),
-                    _buildSuggestionChip('Give me board-style important questions'),
-                    const SizedBox(width: 8),
-                    _buildSuggestionChip('Make a short revision summary'),
-                  ],
-                ),
-              ),
-            ),
-          Expanded(
-            child: _currentChatId == null
-                ? _buildEmptyState(profile, user.uid)
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                    itemCount: _messages.length + (_isGenerating ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (_isGenerating && index == _messages.length) {
-                        if (_streamingText.isEmpty) return _buildShimmerLoading();
-                        return _buildMessageBubble(
-                          ChatMessageModel(id: 'streaming', sender: 'ai', text: _streamingText, timestamp: DateTime.now()),
-                          index: index,
-                        );
-                      }
-                      return _buildMessageBubble(_messages[index], index: index);
-                    },
-                  ),
-          ),
-          _buildInputBar(authProvider),
-        ],
-      ),
-    );
-  }
-
-  Widget _profileChip(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(text, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 12)),
-    );
-  }
-
-  Widget _buildEmptyState(StudentProfile profile, String userId) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return Stack(
+      children: [
+        Column(
           children: [
-            Container(
-              width: 96, height: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [AppColors.primary.withValues(alpha: 0.18), AppColors.primary.withValues(alpha: 0.05)],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
-                ),
+            _buildTopBar(profile),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: _currentChatId == null
+                    ? _buildGreetingState(profile, user.uid)
+                    : ListView.builder(
+                        key: const ValueKey('chat_list'),
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(
+                            16, 16, 16, 12),
+                        itemCount:
+                            _messages.length + (_isGenerating ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (_isGenerating &&
+                              index == _messages.length) {
+                            if (_streamingText.isEmpty) {
+                              return _buildShimmerLoading();
+                            }
+                            return _buildMessageBubble(
+                              ChatMessageModel(
+                                id: 'streaming',
+                                sender: 'ai',
+                                text: _streamingText,
+                                timestamp: DateTime.now(),
+                              ),
+                              index: index,
+                            );
+                          }
+                          return _buildMessageBubble(
+                              _messages[index],
+                              index: index);
+                        },
+                      ),
               ),
-              child: const Icon(Icons.auto_awesome_rounded, size: 44, color: AppColors.primary),
             ),
-            const SizedBox(height: 22),
-            Text('Salaam, ${profile.name.split(' ').first}', textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.onSurfaceOf(context))),
-            const SizedBox(height: 10),
-            Text('Ask anything about your board syllabus — upload an image or type a question.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, height: 1.5, color: AppColors.onSurfaceMutedOf(context))),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: () => _startNewChat(userId),
-              child: const Text('Start a new conversation'),
-            ),
+            _buildInputBar(authProvider),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildInputBar(AuthProvider authProvider) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceAltOf(context),
-        border: Border(top: BorderSide(color: AppColors.borderOf(context))),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surfaceOf(context),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: AppColors.borderOf(context)),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: _showImagePickerSheet,
-                    icon: Icon(
-                      _selectedImage != null ? Icons.image_rounded : Icons.add_photo_alternate_outlined,
-                      color: _selectedImage != null ? AppColors.primary : AppColors.onSurfaceMutedOf(context),
-                    ),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      minLines: 1,
-                      maxLines: 4,
-                      style: TextStyle(color: AppColors.onSurfaceOf(context)),
-                      decoration: const InputDecoration(
-                        hintText: 'Ask a question or paste a topic...',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 14),
-                        isDense: true,
-                      ),
-                      onSubmitted: (_) => _sendMessage(authProvider),
-                    ),
-                  ),
-                ],
+        if (_sidebarOpen)
+          GestureDetector(
+            onTap: _closeSidebar,
+            child: AnimatedOpacity(
+              opacity: _sidebarOpen ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.35),
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          Container(
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [AppColors.primary, Color(0xFF0F2D6B)],
-                begin: Alignment.topLeft, end: Alignment.bottomRight,
-              ),
-            ),
-            child: IconButton(
-              onPressed: _isGenerating ? null : () => _sendMessage(authProvider),
-              icon: const Icon(Icons.send_rounded, color: Colors.white),
-            ),
-          ),
-        ],
-      ),
+        SlideTransition(
+          position: _sidebarSlide,
+          child: _buildSidebar(user.uid),
+        ),
+      ],
     );
   }
 }
