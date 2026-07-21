@@ -207,25 +207,6 @@ class ShellLayout extends StatelessWidget {
 
   const ShellLayout({super.key, required this.state, required this.child});
 
-  String _title(String path) {
-    switch (path) {
-      case '/': return 'IlmAI Home';
-      case '/chat': return 'IlmAI Agent';
-      case '/notes': return 'Revision Notes';
-      case '/library': return 'Library';
-      case '/news-feed': return 'News Feed';
-      case '/exams':
-      case '/quiz': return 'Exams & Tests';
-      case '/settings': return 'Settings';
-      case '/profile': return 'My Profile';
-      case '/leaderboard': return 'Leaderboard';
-      case '/help': return 'Help Center';
-      case '/flashcards': return 'Flashcards';
-      case '/analytics': return 'Study Analytics';
-      default: return 'IlmAI';
-    }
-  }
-
   int _navIndex(String path) {
     if (path == '/chat') return 0;
     if (path == '/') return 1;
@@ -245,70 +226,10 @@ class ShellLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = state.matchedLocation;
     final navIdx = _navIndex(path);
-    final isHome = path == '/';
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.black.withValues(alpha: 0.05),
-        centerTitle: true,
-        leading: isHome
-            ? IconButton(
-                icon: const Icon(Icons.menu_rounded, size: 26, color: AppColors.onSurface),
-                onPressed: () => context.push('/menu'),
-              )
-            : IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                    size: 20, color: AppColors.onSurface),
-                onPressed: () => context.go('/menu'),
-              ),
-        title: Text(
-          _title(path),
-          style: const TextStyle(
-            color: AppColors.onSurface,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-        actions: [
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none_rounded,
-                    color: AppColors.onSurface, size: 24),
-                onPressed: () => context.push('/notifications'),
-              ),
-              // Unread badge
-              Positioned(
-                right: 10,
-                top: 10,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.error,
-                    border: Border.all(color: Colors.white, width: 1.5),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(
-            height: 1,
-            color: AppColors.border.withValues(alpha: 0.6),
-          ),
-        ),
-      ),
-
-      body: child,
-
+      body: SafeArea(child: child),
       bottomNavigationBar: _PremiumBottomNav(
         currentIndex: navIdx,
         onTap: (i) => _onNav(context, i),
@@ -330,7 +251,7 @@ class _PremiumBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 84,
+      height: 86,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -405,7 +326,7 @@ class _NavItem extends StatelessWidget {
             AnimatedContainer(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOutCubic,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
                 color: sel
                     ? AppColors.primary.withValues(alpha: 0.10)
@@ -415,10 +336,10 @@ class _NavItem extends StatelessWidget {
               child: Icon(
                 sel ? activeIcon : icon,
                 color: sel ? AppColors.primary : AppColors.onSurfaceMuted,
-                size: 24,
+                size: 22,
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
