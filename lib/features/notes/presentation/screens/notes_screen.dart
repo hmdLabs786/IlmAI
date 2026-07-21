@@ -174,8 +174,17 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
         preferredSize: const Size.fromHeight(50),
         child: AppBar(
           backgroundColor: Colors.transparent, elevation: 0, automaticallyImplyLeading: false,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 4),
+          bottom: TabBar(controller: _tabController, indicatorColor: AppColors.primary, labelColor: AppColors.primary, unselectedLabelColor: AppColors.onSurfaceMuted, tabs: const [Tab(text: "Generate Notes"), Tab(text: "Saved Notes")]),
+        ),
+      ),
+      body: Stack(
+        children: [
+          TabBarView(controller: _tabController, children: [
+            _buildGeneratorTab(profile),
+            _buildSavedTab(),
+          ]),
+          Positioned(
+            top: 4, left: 8,
             child: Container(
               width: 36, height: 36,
               decoration: BoxDecoration(
@@ -186,17 +195,12 @@ class _NotesScreenState extends State<NotesScreen> with SingleTickerProviderStat
               child: IconButton(
                 padding: EdgeInsets.zero,
                 icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
-                onPressed: () => context.go('/'),
+                onPressed: () => context.go('/menu'),
               ),
             ),
           ),
-          bottom: TabBar(controller: _tabController, indicatorColor: AppColors.primary, labelColor: AppColors.primary, unselectedLabelColor: AppColors.onSurfaceMuted, tabs: const [Tab(text: "Generate Notes"), Tab(text: "Saved Notes")]),
-        ),
+        ],
       ),
-      body: TabBarView(controller: _tabController, children: [
-        _buildGeneratorTab(profile),
-        _buildSavedTab(),
-      ]),
     );
   }
 

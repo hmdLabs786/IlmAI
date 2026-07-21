@@ -152,7 +152,7 @@ class _FlashcardGenerateScreenState extends State<FlashcardGenerateScreen> {
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
-                        onPressed: () => context.go('/'),
+                        onPressed: () => context.go('/menu'),
                       ),
                     ),
                   ),

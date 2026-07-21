@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/app_colors.dart';
@@ -94,6 +95,20 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(children: [
+        Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.surfaceOf(context),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+          ),
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
+            onPressed: () => context.go('/menu'),
+          ),
+        ),
+        const SizedBox(width: 10),
         const Text('Board News', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.onSurface)),
         const Spacer(),
         Container(

@@ -305,7 +305,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         child: IconButton(
                           padding: EdgeInsets.zero,
                           icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
-                          onPressed: () => context.go('/'),
+                          onPressed: () => context.go('/menu'),
                         ),
                       ),
                       const SizedBox(width: 12),
