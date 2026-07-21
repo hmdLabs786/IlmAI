@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
@@ -186,6 +187,22 @@ class _ExamsScreenState extends State<ExamsScreen> with SingleTickerProviderStat
         preferredSize: const Size.fromHeight(50),
         child: AppBar(
           backgroundColor: Colors.transparent, elevation: 0, automaticallyImplyLeading: false,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.surfaceOf(context),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
+                onPressed: () => context.pop(),
+              ),
+            ),
+          ),
           bottom: TabBar(controller: _tabController, indicatorColor: AppColors.primary, labelColor: AppColors.primary, unselectedLabelColor: AppColors.onSurfaceMuted, tabs: const [Tab(text: "Generate Papers"), Tab(text: "Saved Papers")]),
         ),
       ),

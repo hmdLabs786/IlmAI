@@ -92,6 +92,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 12),
+              child: Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.surfaceAltOf(context),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                ),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
+                  onPressed: () => context.pop(),
+                ),
+              ),
+            ),
             _buildHeader(profile, user.email ?? ''),
             const SizedBox(height: 20),
             _buildSummaryChips(profile),

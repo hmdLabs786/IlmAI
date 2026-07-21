@@ -139,6 +139,22 @@ class _FlashcardGenerateScreenState extends State<FlashcardGenerateScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 12),
+                    child: Container(
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                      ),
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                  ),
                   const Text('1. Source material', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.onSurface)),
                   const SizedBox(height: 6),
                   const Text('Paste study text below or select a subject+chapter.', style: TextStyle(fontSize: 12, color: AppColors.onSurfaceMuted)),

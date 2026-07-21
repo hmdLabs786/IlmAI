@@ -158,6 +158,22 @@ class _FlashcardDecksScreenState extends State<FlashcardDecksScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 8),
+                child: Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.surfaceOf(context),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                  ),
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
+                    onPressed: () => context.pop(),
+                  ),
+                ),
+              ),
               if (dueDecks.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),

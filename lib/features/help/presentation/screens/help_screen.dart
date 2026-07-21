@@ -132,6 +132,22 @@ class _HelpScreenState extends State<HelpScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 12),
+            child: Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.surfaceAltOf(context),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.primary),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ),
           // ── FAQ section header ──
           _sectionHeader('Frequently Asked Questions', Icons.quiz_outlined),
           const SizedBox(height: 14),
