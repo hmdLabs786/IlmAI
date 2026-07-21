@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/widgets/smart_text.dart';
@@ -1222,175 +1223,194 @@ This is a demo response because the Gemini API key is not configured yet.
     );
   }
 
-  // ─── INPUT BAR (redesigned) ─────────────────────────────────────────
+  // ─── INPUT BAR (floating pill redesign) ────────────────────────────
 
   Widget _buildInputBar(AuthProvider authProvider) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceOf(context),
-        border: Border(
-          top: BorderSide(
-            color: AppColors.borderOf(context).withValues(alpha: 0.3),
-          ),
-        ),
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (_selectedImage != null)
             Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                ),
+                color: AppColors.surfaceAltOf(context).withValues(alpha: 0.95),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                     child: Image.file(
                       _selectedImage!,
-                      width: 36, height: 36,
+                      width: 32, height: 32,
                       fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      _selectedImage!.path.split('/').last,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.onSurfaceOf(context),
-                      ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _selectedImage!.path.split('/').last,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.onSurfaceOf(context),
                     ),
                   ),
+                  const SizedBox(width: 4),
                   GestureDetector(
                     onTap: () => setState(() => _selectedImage = null),
-                    child: Container(
+                    child: Padding(
                       padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
                       child: Icon(
                         Icons.close_rounded,
                         size: 16,
-                        color: Colors.red.withValues(alpha: 0.6),
+                        color: AppColors.onSurfaceMutedOf(context),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.surfaceAltOf(context),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: AppColors.borderOf(context),
-              ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, bottom: 4),
-                  child: GestureDetector(
-                    onTap: _showImagePickerSheet,
-                    child: Container(
-                      width: 40, height: 40,
-                      decoration: BoxDecoration(
-                        color: _selectedImage != null
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        _selectedImage != null
-                            ? Icons.image_rounded
-                            : Icons.add_photo_alternate_outlined,
-                        size: 20,
-                        color: _selectedImage != null
-                            ? AppColors.primary
-                            : AppColors.onSurfaceMutedOf(context),
-                      ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black87)
+                      .withValues(alpha: _selectedImage != null ? 0.12 : 0.06),
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.10),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.06),
+                      blurRadius: 24,
+                      offset: const Offset(0, 0),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    focusNode: _inputFocus,
-                    minLines: 1,
-                    maxLines: 4,
-                    textInputAction: TextInputAction.send,
-                    style: TextStyle(
-                      color: AppColors.onSurfaceOf(context),
-                      fontSize: 15,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Ask a question or paste a topic...',
-                      hintStyle: TextStyle(
-                        color: AppColors.onSurfaceMutedOf(context)
-                            .withValues(alpha: 0.7),
-                        fontSize: 15,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    GestureDetector(
+                      onTap: _showImagePickerSheet,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 2, bottom: 2),
+                        child: Container(
+                          width: 44, height: 44,
+                          decoration: BoxDecoration(
+                            color: _selectedImage != null
+                                ? AppColors.primary.withValues(alpha: 0.15)
+                                : AppColors.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            _selectedImage != null
+                                ? Icons.image_rounded
+                                : Icons.add_photo_alternate_outlined,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14),
-                      isDense: true,
                     ),
-                    onSubmitted: (_) => _sendMessage(authProvider),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 4, bottom: 4),
-                  child: GestureDetector(
-                    onTap: _isGenerating
-                        ? null
-                        : () => _sendMessage(authProvider),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: _isGenerating
-                            ? null
-                            : const LinearGradient(
-                                colors: [
-                                  AppColors.primary,
-                                  Color(0xFF0F2D6B),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: TextField(
+                          controller: _messageController,
+                          focusNode: _inputFocus,
+                          minLines: 1,
+                          maxLines: 4,
+                          textInputAction: TextInputAction.send,
+                          style: TextStyle(
+                            color: AppColors.onSurfaceOf(context),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Message IlmAI...',
+                            hintStyle: TextStyle(
+                              color: AppColors.onSurfaceMutedOf(context)
+                                  .withValues(alpha: 0.5),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 4),
+                            isDense: true,
+                          ),
+                          onSubmitted: (_) => _sendMessage(authProvider),
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _isGenerating
+                          ? null
+                          : () => _sendMessage(authProvider),
+                      child: Container(
+                        width: 44, height: 44,
+                        margin: const EdgeInsets.only(right: 2, bottom: 2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: _isGenerating
+                              ? null
+                              : const LinearGradient(
+                                  colors: [
+                                    AppColors.primary,
+                                    Color(0xFF0F2460),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                          color: _isGenerating
+                              ? AppColors.onSurfaceMutedOf(context)
+                                  .withValues(alpha: 0.12)
+                              : null,
+                          boxShadow: _isGenerating
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
                                 ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                        color: _isGenerating
-                            ? AppColors.onSurfaceMutedOf(context)
-                                .withValues(alpha: 0.15)
-                            : null,
-                      ),
-                      child: Icon(
-                        _isGenerating
-                            ? Icons.hourglass_bottom_rounded
-                            : Icons.arrow_upward_rounded,
-                        color: _isGenerating
-                            ? AppColors.onSurfaceMutedOf(context)
-                            : Colors.white,
-                        size: 20,
+                        ),
+                        child: Icon(
+                          _isGenerating
+                              ? Icons.hourglass_bottom_rounded
+                              : Icons.arrow_upward_rounded,
+                          color: _isGenerating
+                              ? AppColors.onSurfaceMutedOf(context)
+                              : Colors.white,
+                          size: 22,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ],
